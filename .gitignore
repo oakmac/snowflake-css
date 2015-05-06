@@ -1,2 +1,8 @@
 /target
+
+/public/js/main.js
+/public/js/main.min.js
 app.js
+
+
+*.diff

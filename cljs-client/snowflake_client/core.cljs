@@ -1,5 +1,6 @@
 (ns snowflake-client.core
   (:require
+    [clojure.string :refer [blank?]]
     [quiescent :include-macros true]
     [sablono.core :as sablono :include-macros true]
     [snowflake-client.dom :refer [by-id]]
@@ -9,35 +10,72 @@
 ;; Data
 ;;------------------------------------------------------------------------------
 
-(def dummy-class-list {
+(def dummy-class-data {
   "container-53f43" {
     :count 3
+    :files [
+      {:filename "src-cljs/my_proj/bar.cljs", :count 1}
+      {:filename "src-cljs/my_proj/biz.cljs", :count 1}
+      {:filename "src-cljs/my_proj/foo.cljs", :count 1}
+    ]
   }
 
   "label-4a5cc" {
     :count 22
+    :files [
+      {:filename "src-cljs/my_proj/bar.cljs", :count 5}
+      {:filename "src-cljs/my_proj/biz.cljs", :count 2}
+      {:filename "src-cljs/my_proj/foo.cljs", :count 3}
+      {:filename "templates/athens.mustache", :count 1}
+      {:filename "templates/chalcis.mustache", :count 1}
+      {:filename "templates/chania.mustache", :count 1}
+      {:filename "templates/heraklion.mustache", :count 1}
+      {:filename "templates/ioannina.mustache", :count 1}
+      {:filename "templates/larissa.mustache", :count 1}
+      {:filename "templates/patras.mustache", :count 1}
+      {:filename "templates/rhodes.mustache", :count 1}
+      {:filename "templates/thessaloniki.mustache", :count 1}
+      {:filename "templates/volos.mustache", :count 1}
+    ]
   }
 
   "header-label-f23ea" {
     :count 6
+    :files [
+      {:filename "src-cljs/my_proj/bar.cljs", :count 2}
+      {:filename "src-cljs/my_proj/biz.cljs", :count 2}
+      {:filename "src-cljs/my_proj/foo.cljs", :count 2}
+    ]
   }
 
   "list-label-27ddb" {
-    :count 1
+    :count 8
+    :files [
+      {:filename "templates/larissa.mustache", :count 8}
+    ]
   }
 
   "clr-7f0e5" {
     :count 41
+    :files [
+
+    ]
   }
 })
 
-(def all-classes (atom dummy-class-list))
+(def all-classes (atom dummy-class-data))
 
-(defn- alpha-sort [[a-classname _a-map] [b-classname _b-map]]
-  (compare a-classname b-classname))
+(defn- alpha-sort [a b]
+  (compare (:classname a) (:classname b)))
+
+(defn- add-classname [[classname c]]
+  (assoc c :classname classname))
 
 (defn- all-classes-sorted-by-name []
-  (into [] (sort alpha-sort @all-classes)))
+  (->> @all-classes
+       (map add-classname)
+       (sort alpha-sort)
+       (into [])))
 
 ;;------------------------------------------------------------------------------
 ;; App State
@@ -48,8 +86,7 @@
   :selected-classname nil
   :selected-file nil
   :files nil
-  :search-text ""
-  })
+  :search-text ""})
 
 (def app-state (atom initial-app-state))
 
@@ -61,11 +98,23 @@
   (let [new-text (aget js-evt "currentTarget" "value")]
     (swap! app-state assoc :search-text new-text)))
 
-(defn- on-mouse-enter-class [js-evt]
+(defn- mark-active [active-idx idx itm]
+  (if (= active-idx idx)
+    (assoc itm :active? true)
+    itm))
+
+(defn- on-mouse-enter-class-row [js-evt]
   (let [target-el (aget js-evt "currentTarget")
-        idx (int (.getAttribute target-el "data-idx"))
-        classname (.getAttribute target-el "data-classname")]
-    (swap! app-state assoc :selected-classname classname)))
+        active-idx (int (.getAttribute target-el "data-idx"))
+        classname (.getAttribute target-el "data-classname")
+        current-class-list (:classes @app-state)
+        class-list-with-no-active (map #(dissoc % :active?) current-class-list)
+        new-class-list (map-indexed (partial mark-active active-idx) class-list-with-no-active)]
+    ;; defensive - make sure the class exists
+    (when (get @all-classes classname false)
+      (swap! app-state assoc :classes (into [] new-class-list)
+                             :files (get-in @all-classes [classname :files])
+                             :selected-classname classname))))
 
 ;;------------------------------------------------------------------------------
 ;; Templates
@@ -81,7 +130,7 @@
 
 (quiescent/defcomponent FileView []
   (sablono/html
-    [:div.half-col-c79be "FileView"]))
+    [:div.fileview-col-c79be "*shows how the classname is used in the file*"]))
 
 (quiescent/defcomponent FileRow [f]
   (sablono/html
@@ -90,36 +139,44 @@
 
 (quiescent/defcomponent FilesList [[selected-classname files]]
   (sablono/html
-    [:div.quarter-col-5acc6
-      (str "Files that contain: " selected-classname)
-      ;;(map FileRow files)
-      ]))
+    [:div.files-col-74a77
+      [:h4.col-title-2c774 "Files"
+        [:div.count-13cac (str (count files) " files contain " selected-classname)]]
+      ;; (str "Files that contain: " selected-classname)
+      [:div.list-wrapper-7462e
+        (map FileRow files)]]))
 
-(quiescent/defcomponent AClass [[idx [classname c]]]
+(quiescent/defcomponent ClassRow [[idx c]]
   (sablono/html
-    [:div.single-class-f529a
-      {:data-classname classname
-       :data-idx idx
-       :on-mouse-enter on-mouse-enter-class}
-      classname]))
+    [:div {:class (str "single-class-f529a" (when (:active? c) " active-8ff04"))
+           :data-classname (:classname c)
+           :data-idx idx
+           :on-mouse-enter on-mouse-enter-class-row}
+      (:classname c)
+      [:div.small-facts-6b6e3
+        (str (count (:files c)) " files, "
+             (:count c) " instances")]]))
 
 (quiescent/defcomponent ClassList [class-list]
   (sablono/html
-    [:div.quarter-col-5acc6
-      (map-indexed #(AClass [%1 %2]) class-list)]))
+    [:div.class-col-5acc6
+      [:h4.col-title-2c774 "Classes"
+        [:div.count-13cac (str (count class-list) " total")]]
+      [:div.list-wrapper-7462e
+        (map-indexed #(ClassRow [%1 %2]) class-list)]]))
 
 (quiescent/defcomponent MainInput [search-text]
   (sablono/html
     [:input.main-input-f14b8 {
       :on-change on-change-input
-      :placeholder "Search classes"
+      :placeholder "Search classes and files"
       :type "text"
       :value search-text}]))
 
 (quiescent/defcomponent App [state]
   (sablono/html
     [:div.container-53f43
-      [:h1 "Snowflake CSS"]
+      [:h1.title-5ac1e "Snowflake CSS"]
       (MainInput (:search-text state))
       [:div.wrapper-463b0
         (ClassList (:classes state))

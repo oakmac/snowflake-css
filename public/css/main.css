@@ -1,4 +1,37 @@
 /*----------------------------------------------------------------------------*
+ * Fonts                                                                      *
+ *----------------------------------------------------------------------------*/
+
+@font-face {
+  font-family: 'Open Sans Light';
+  font-style: normal;
+  font-weight: 300;
+  src: local('Open Sans Light'), local('OpenSans-Light'), url('../fonts/OpenSans-Light.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Open Sans'), local('OpenSans'), url('../fonts/OpenSans.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 600;
+  src: local('Open Sans Semibold'), local('OpenSans-Semibold'), url('../fonts/OpenSans-Semibold.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Droid Sans Mono';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Droid Sans Mono'), local('DroidSansMono'), url('../fonts/DroidSansMono.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
+}
+
+/*----------------------------------------------------------------------------*
  * Tag Selectors                                                              *
  *----------------------------------------------------------------------------*/
 
@@ -11,12 +44,17 @@ html {
 }
 
 body {
-  font-family: Helvetica, sans-serif;
+  font-family: "Open Sans", Helvetica, sans-serif;
 }
 
 /*----------------------------------------------------------------------------*
  * Snowflake Classes                                                          *
  *----------------------------------------------------------------------------*/
+
+.title-5ac1e {
+  font-family: "Open Sans Light";
+  font-weight: 300;
+}
 
 .container-53f43 {
   margin: 0 auto;
@@ -38,24 +76,69 @@ body {
 
 }
 
-.file-row-c9a43 {
-  border-bottom: 1px solid #eee;
-  padding: 6px 12px;
+.class-col-5acc6 {
+  float: left;
+  width: 20%;
 }
 
-.quarter-col-5acc6 {
-  border: 1px solid orange;
+.files-col-74a77 {
   float: left;
-  width: 300px;
+  width: 30%;
 }
 
-.half-col-c79be {
-  border: 1px solid orange;
+.fileview-col-c79be {
   float: left;
-  width: 600px;
+  width: 50%;
+}
+
+.list-wrapper-7462e {
+  border: 1px solid #ddd;
+  border-bottom: 0;
 }
 
 .single-class-f529a {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #ddd;
   padding: 12px;
+}
+
+.file-row-c9a43 {
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+  padding: 12px;
+}
+
+.small-title-b4fba {
+  color: #888;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.col-title-2c774 {
+  color: #555;
+  font-family: "Open Sans";
+  font-size: 20px;
+  font-weight: 600;
+  margin: 20px 0;
+  text-transform: uppercase;
+}
+
+.count-13cac {
+  color: #222;
+  font-family: "Open Sans Light";
+  font-size: 14px;
+  font-weight: 300;
+  margin: 0;
+  text-transform: none;
+}
+
+.small-facts-6b6e3 {
+  color: #555;
+  font-family: "Open Sans Light";
+  font-size: 12px;
+  font-weight: 300;
+}
+
+.active-8ff04 {
+  background: #49f1ff;
 }
