@@ -1,0 +1,61 @@
+/*----------------------------------------------------------------------------*
+ * Tag Selectors                                                              *
+ *----------------------------------------------------------------------------*/
+
+html {
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+body {
+  font-family: Helvetica, sans-serif;
+}
+
+/*----------------------------------------------------------------------------*
+ * Snowflake Classes                                                          *
+ *----------------------------------------------------------------------------*/
+
+.container-53f43 {
+  margin: 0 auto;
+  width: 1200px;
+}
+
+.main-input-f14b8 {
+  font-size: 24px;
+  margin: 20px 0;
+  padding: 12px;
+  width: 100%;
+}
+
+.clr-7f0e5 {
+  clear: both;
+}
+
+.wrapper-463b0 {
+
+}
+
+.file-row-c9a43 {
+  border-bottom: 1px solid #eee;
+  padding: 6px 12px;
+}
+
+.quarter-col-5acc6 {
+  border: 1px solid orange;
+  float: left;
+  width: 300px;
+}
+
+.half-col-c79be {
+  border: 1px solid orange;
+  float: left;
+  width: 600px;
+}
+
+.single-class-f529a {
+  border-bottom: 1px solid #eee;
+  padding: 12px;
+}
