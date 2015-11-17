@@ -102,6 +102,7 @@ What questions might I have about this particular chunk of code?
 * Where is the HTML this selector is intended to target in the rest of the
   codebase? Which template files, static HTML, JavaScript, etc?
 * Is this selector specific enough to apply the style? Is it overly specific?
+* Is this selector used by JavaScript in any way?
 * Will this rule be overwritten by a different selector? If so, which properties
   will be overwritten and which ones will apply? Where is the selector or
   selectors that will override this one?
