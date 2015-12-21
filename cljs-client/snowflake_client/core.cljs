@@ -65,15 +65,19 @@
        (into [])))
 
 ;;------------------------------------------------------------------------------
+;; Data
+;;------------------------------------------------------------------------------
+
+
+
+;;------------------------------------------------------------------------------
 ;; App State
 ;;------------------------------------------------------------------------------
 
 (def initial-page-state
-  {:classes (all-classes-sorted-by-name)
-   :selected-classname nil
-   :selected-file nil
-   :files nil
-   :search-text ""})
+  {:active-tab :classes
+   :classes-search-text ""
+   :sort-classes-by "class-names-a-z"})
 
 (def page-state (atom initial-page-state))
 
@@ -151,16 +155,105 @@
                             :type "text"
                             :value search-text}])
 
+(defn- change-class-search [js-evt]
+  (let [new-text (aget js-evt "currentTarget" "value")]
+    (swap! page-state assoc :classes-search-text new-text)))
+
+(defn- on-change-classes-sort-by [js-evt]
+  (let [new-value (aget js-evt "currentTarget" "value")]
+    (swap! page-state assoc :sort-classes-by new-value)))
+
+(defn- click-new-class-btn []
+  (swap! page-state assoc :new-class-modal-showing? true))
+
+(rum/defc UtilBody < rum/static
+  []
+  [:div "TODO: Util Body"])
+
+(rum/defc FilesBody < rum/static
+  []
+  [:div "TODO: Files Body"])
+
+(rum/defc ClassDetailBody < rum/static
+  []
+  [:div.right
+    [:h2.class-name-sb0bc "primary-btn" [:span.muted "-sb974"]
+      [:a {:href "#"} "rename"]]
+    ;; TODO: make "files" be a dashed underline
+    [:p "Used 32 times in 8 " [:span {:style {:text-decoration "underline"}} "files"]
+      ". Found on " [:code "<button>"] " elements."]
+    [:div.flex-container-s6d73
+      [:div.definition-s7e19
+        [:h4.header-s63ca "Definition"]
+        [:div "TODO: definition here"]]
+      [:div.preview-s376a
+        [:h4.header-s63ca "Preview"]
+        [:div "TODO: preview here"]]]])
+
+(rum/defc ClassesSortByOptions < rum/static
+  [sort-by]
+  [:select
+    {:on-change on-change-classes-sort-by
+     :value sort-by}
+    [:option {:value "class-names-a-z"} "Class Names A-Z"]
+    [:option {:value "class-names-z-a"} "Class Names Z-A"]
+    [:option {:value "files-a-z"} "Files A-Z"]
+    [:option {:value "files-z-a"} "Files Z-A"]
+    [:option {:value "most-used"} "Most Used"]
+    [:option {:value "least-used"} "Least Used"]])
+
+(rum/defc ClassesLeftPanel < rum/static
+  [state]
+  [:div.left
+    [:input.search-input-s24fa
+      {:on-change change-class-search
+       :placeholder "Search Classes"
+       :type "text"
+       :value (:classes-search-text state)}]
+    [:label.sort-by-s7ff8 "Sort By:"
+      (ClassesSortByOptions (:sort-classes-by state))]
+    [:ul.class-list
+      [:li "active-8ff04"]
+      [:li "clr-7f0e5"]
+      [:li "tabs-sd691"]]])
+
+(rum/defc ClassesBody < rum/static
+  [state]
+  [:div
+    [:button.primary-s04e4
+      {:on-click click-new-class-btn} "New Class"]
+    [:div.flex-container-s6d73
+      (ClassesLeftPanel state)
+      (ClassDetailBody state)]])
+
+(rum/defc Tabs < rum/static
+  [active-tab]
+  [:ul.tabs-sd691
+    [:li [:a {:class (when (= active-tab :classes) "active-sb974")
+              :href "#/classes"} "Classes"]]
+    [:li [:a {:class (when (= active-tab :files) "active-sb974")
+              :href "#/files"} "Files"]]
+    [:li [:a {:class (when (= active-tab :util) "active-sb974")
+              :href "#/util"} "Utilities"]]])
+
 (rum/defc App < rum/static
   [state]
   [:div.container-53f43
     [:h1.title-5ac1e "Snowflake CSS"]
-    (MainInput (:search-text state))
-    [:div.wrapper-463b0
-      (ClassList (:classes state))
-      (FilesList [(:selected-classname state) (:files state)])
-      (FileView)
-      [:div.clr-7f0e5]]])
+    (Tabs (:active-tab state))
+    (condp = (:active-tab state)
+      :classes
+      (ClassesBody state)
+
+      :files
+      (FilesBody)
+
+      :util
+      (UtilBody)
+
+      ;; NOTE: this should never happen
+      :else
+      [:div "Error: invalid :active-tab value"])])
 
 ;;------------------------------------------------------------------------------
 ;; Render Loop

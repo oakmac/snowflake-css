@@ -142,3 +142,101 @@ body {
 .active-8ff04 {
   background: #49f1ff;
 }
+
+/*----------------------------------------------------------------------------*
+ * Snowflake Classes                                                          *
+ *----------------------------------------------------------------------------*/
+
+.flex-container-s6d73 {
+  display: flex;
+}
+
+.flex-container-s6d73 .left {
+  border: 1px solid #ccc;
+  flex: 20;
+  padding: 15px;
+}
+
+.flex-container-s6d73 .right {
+  border: 1px solid #ccc;
+  border-left: 0;
+  flex: 80;
+  padding: 15px;
+}
+
+.tabs-sd691 {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tabs-sd691 li {
+  display: inline-block;
+}
+
+.tabs-sd691 a {
+  border: 1px solid #ccc;
+  display: inline-block;
+  padding: 8px 16px;
+}
+
+.active-sb974 {
+  background: #e1e0f5;
+}
+
+.primary-s04e4 {
+  padding: 8px 16px;
+}
+
+.search-input-s24fa {
+  display: block;
+  font-size: 16px;
+  padding: 4px;
+  width: 100%;
+}
+
+.sort-by-s7ff8 {
+  color: #aaa;
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  margin: 15px 0;
+  text-transform: uppercase;
+}
+
+.sort-by-s7ff8 select {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 4px;
+}
+
+.class-name-sb0bc {
+  font-family: "Open Sans Light";
+  font-size: 34px;
+  font-weight: 300;
+}
+
+.class-name-sb0bc .muted {
+  color: #aaa;
+}
+
+.class-name-sb0bc a {
+  display: inline-block;
+  font-size: 14px;
+  margin-left: 10px;
+}
+
+.definition-s7e19 {
+  flex: 40;
+}
+
+.preview-s376a {
+  flex: 60;
+}
+
+.header-s63ca {
+  color: #999;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
