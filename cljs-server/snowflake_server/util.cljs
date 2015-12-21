@@ -1,4 +1,4 @@
-(ns snowflake.util)
+(ns snowflake-server.util)
 
 (defn js-log
   "Logs a JavaScript thing."

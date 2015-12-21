@@ -70,3 +70,9 @@ ones.
   an escape hatch to deal with these?
 * No existing CSS system lets you visualize the connection between your CSS and
   markup. Snowflake enables this.
+
+## License
+
+[ISC License]
+
+[ISC License]:LICENSE.md
