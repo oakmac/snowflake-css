@@ -1,6 +1,6 @@
 (ns snowflake-client.core
   (:require
-    [clojure.string :refer [blank?]]
+    [clojure.string :refer [blank? lower-case]]
     [rum.core :as rum]
     [snowflake-client.util :refer [by-id js-log log]]))
 
@@ -11,6 +11,10 @@
 (def dummy-class-data
   {"container-53f43"
     {:count 3
+     :definition
+       {"display" "flex"
+        "max-width" "400px"
+        "overflow" "auto"}
      :files
        [{:filename "src-cljs/my_proj/bar.cljs", :count 1}
         {:filename "src-cljs/my_proj/biz.cljs", :count 1}
@@ -18,6 +22,13 @@
 
    "label-4a5cc"
      {:count 22
+      :definition
+        {"color" "#aaa"
+         "display" "block"
+         "font-size" "11px"
+         "font-weight" "600"
+         "margin" "15px 0"
+         "text-transform" "uppercase"}
       :files
         [{:filename "src-cljs/my_proj/bar.cljs", :count 5}
          {:filename "src-cljs/my_proj/biz.cljs", :count 2}
@@ -35,6 +46,11 @@
 
    "header-label-f23ea"
      {:count 6
+      :definition
+        {"color" "#999"
+         "font-size" "14px"
+         "font-weight" "600"
+         "text-transform" "uppercase"}
       :files
         [{:filename "src-cljs/my_proj/bar.cljs", :count 2}
          {:filename "src-cljs/my_proj/biz.cljs", :count 2}
@@ -45,10 +61,10 @@
       :files
         [{:filename "templates/larissa.mustache", :count 8}]}
 
-
    "clr-7f0e5"
      {:count 41
-      :files []}})
+      :files
+        [{:filename "src-cljs/my_proj/biz.cljs", :count 41}]}})
 
 (def all-classes (atom dummy-class-data))
 
@@ -77,7 +93,8 @@
 (def initial-page-state
   {:active-tab :classes
    :classes-search-text ""
-   :sort-classes-by "class-names-a-z"})
+   :sort-classes-by "class-names-a-z"
+   :selected-class nil})
 
 (def page-state (atom initial-page-state))
 
@@ -139,7 +156,7 @@
       (str (count (:files c)) " files, "
            (:count c) " instances")]])
 
-(rum/defc ClassList < rum/static
+(rum/defc ClassListOLD < rum/static
   [class-list]
   [:div.class-col-5acc6
     [:h4.col-title-2c774 "Classes"
@@ -174,6 +191,12 @@
   []
   [:div "TODO: Files Body"])
 
+(rum/defc ClassDefinition < rum/static
+  [d]
+  [:dl
+    [:dt "color"]
+    [:dd "#999"]])
+
 (rum/defc ClassDetailBody < rum/static
   []
   [:div.right
@@ -185,7 +208,7 @@
     [:div.flex-container-s6d73
       [:div.definition-s7e19
         [:h4.header-s63ca "Definition"]
-        [:div "TODO: definition here"]]
+        (ClassDefinition)]
       [:div.preview-s376a
         [:h4.header-s63ca "Preview"]
         [:div "TODO: preview here"]]]])
@@ -197,25 +220,68 @@
      :value sort-by}
     [:option {:value "class-names-a-z"} "Class Names A-Z"]
     [:option {:value "class-names-z-a"} "Class Names Z-A"]
-    [:option {:value "files-a-z"} "Files A-Z"]
-    [:option {:value "files-z-a"} "Files Z-A"]
+    ; [:option {:value "files-a-z"} "Files A-Z"]
+    ; [:option {:value "files-z-a"} "Files Z-A"]
     [:option {:value "most-used"} "Most Used"]
     [:option {:value "least-used"} "Least Used"]])
 
+(rum/defc ClassListItem < rum/static
+  [[classname c]]
+  [:li
+    [:div.classname-sfb8e classname]
+    [:div.small-count-s3096
+      (str (:count c) " instances, ")
+      (count (:files c)) " files"]])
+
+(rum/defc ClassList < rum/static
+  [classes]
+  [:ul.class-list-sfe2c
+    (map ClassListItem classes)])
+
+(defn- match-text? [search-txt class]
+  (not= -1 (.indexOf (first class) search-txt)))
+
+(defn- class-name-comp [a b]
+  (compare (first a) (first b)))
+
+(defn- usage-comp [a b]
+  (compare (-> b second :count) (-> a second :count)))
+
+(def sort-fns
+  {"class-names-a-z" class-name-comp
+   "class-names-z-a" class-name-comp
+   "most-used" usage-comp
+   "least-used" usage-comp})
+
+(def reverse-sort-methods #{"class-names-z-a" "least-used"})
+
+;; TODO: probably should memoize this
+(defn- filtered-and-sorted-classlist [search-txt sort-method]
+  (let [lowercase-search-txt (lower-case search-txt)
+        filter-fn (partial match-text? lowercase-search-txt)
+        sort-fn (get sort-fns sort-method)
+        reverse? (contains? reverse-sort-methods sort-method)
+        classes (->> @all-classes
+                     (filter filter-fn)
+                     (sort sort-fn))]
+    (if reverse?
+      (reverse classes)
+      classes)))
+
 (rum/defc ClassesLeftPanel < rum/static
-  [state]
-  [:div.left
-    [:input.search-input-s24fa
-      {:on-change change-class-search
-       :placeholder "Search Classes"
-       :type "text"
-       :value (:classes-search-text state)}]
-    [:label.sort-by-s7ff8 "Sort By:"
-      (ClassesSortByOptions (:sort-classes-by state))]
-    [:ul.class-list
-      [:li "active-8ff04"]
-      [:li "clr-7f0e5"]
-      [:li "tabs-sd691"]]])
+  [{:keys [classes-search-text sort-classes-by]}]
+  (let [classes (filtered-and-sorted-classlist classes-search-text sort-classes-by)]
+    [:div.left
+      [:input.search-input-s24fa
+        {:on-change change-class-search
+         :placeholder "Search Classes"
+         :type "text"
+         :value classes-search-text}]
+      [:label.sort-by-s7ff8 "Sort By:"
+        (ClassesSortByOptions sort-classes-by)]
+      (if (empty? classes)
+        [:div.no-results-s993d "No classes found"]
+        (ClassList classes))]))
 
 (rum/defc ClassesBody < rum/static
   [state]
