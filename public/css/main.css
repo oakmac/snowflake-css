@@ -216,10 +216,6 @@ body {
   font-weight: 300;
 }
 
-.class-name-sb0bc .muted {
-  color: #aaa;
-}
-
 .class-name-sb0bc a {
   display: inline-block;
   font-size: 14px;
@@ -227,17 +223,20 @@ body {
 }
 
 .definition-s7e19 {
-  flex: 40;
+  flex: 35;
+  padding-right: 15px;
 }
 
 .preview-s376a {
-  flex: 60;
+  flex: 65;
 }
 
 .header-s63ca {
+  border-bottom: 1px solid #ddd;
   color: #999;
   font-size: 14px;
   font-weight: 600;
+  padding-bottom: 6px;
   text-transform: uppercase;
 }
 
@@ -267,4 +266,38 @@ body {
 .small-count-s3096 {
   color: #aaa;
   font-size: 12px;
+}
+
+.muted-s5ce7 {
+  color: #888;
+  font-family: "Open Sans Light";
+  font-weight: 300;
+}
+
+.muted-sff17 {
+  color: #aaa;
+}
+
+.definition-list-s7860 {
+  font-family: "Droid Sans Mono", monospace;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.property-s9fe7 {
+  margin: 8px 0;
+}
+
+.key-s2dab {
+  color: #cc1d1d;
+}
+
+.val-s1b79 {
+  display: inline-block;
+  margin-left: 4px;
+}
+
+.preview-wrapper-sb56f {
+  
 }

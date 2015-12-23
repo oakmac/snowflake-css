@@ -1,8 +1,18 @@
 (ns snowflake-client.core
   (:require
-    [clojure.string :refer [blank? lower-case]]
+    [clojure.string :refer [blank? join lower-case split]]
     [rum.core :as rum]
     [snowflake-client.util :refer [by-id js-log log]]))
+
+;;------------------------------------------------------------------------------
+;; Misc
+;;------------------------------------------------------------------------------
+
+(defn- split-classname [c]
+  (let [v (split c "-")]
+    {:full-classname c
+     :name (join "-" (pop v))
+     :hash (str "-" (peek v))}))
 
 ;;------------------------------------------------------------------------------
 ;; Data
@@ -10,7 +20,8 @@
 
 (def dummy-class-data
   {"container-53f43"
-    {:count 3
+    {:classname "container-53f43"
+     :count 3
      :definition
        {"display" "flex"
         "max-width" "400px"
@@ -21,7 +32,8 @@
         {:filename "src-cljs/my_proj/foo.cljs", :count 1}]}
 
    "label-4a5cc"
-     {:count 22
+     {:classname "label-4a5cc"
+      :count 22
       :definition
         {"color" "#aaa"
          "display" "block"
@@ -45,7 +57,8 @@
          {:filename "templates/volos.mustache", :count 1}]}
 
    "header-label-f23ea"
-     {:count 6
+     {:classname "header-label-f23ea"
+      :count 6
       :definition
         {"color" "#999"
          "font-size" "14px"
@@ -57,14 +70,28 @@
          {:filename "src-cljs/my_proj/foo.cljs", :count 2}]}
 
    "list-label-27ddb"
-     {:count 8
+     {:classname "list-label-27ddb"
+      :count 8
+      :definition
+        {"font-family" "\"Open Sans Light\""
+         "font-weight" "300"
+         "font-size" "34px"
+         "border" "2px solid orange"
+         "padding" "20px"}
       :files
         [{:filename "templates/larissa.mustache", :count 8}]}
 
    "clr-7f0e5"
-     {:count 41
+     {:classname "clr-7f0e5"
+      :count 41
+      :definition
+        {"clear" "both"}
       :files
         [{:filename "src-cljs/my_proj/biz.cljs", :count 41}]}})
+
+(def dummy-single-class (get dummy-class-data "clr-7f0e5"))
+
+(log dummy-single-class)
 
 (def all-classes (atom dummy-class-data))
 
@@ -93,8 +120,8 @@
 (def initial-page-state
   {:active-tab :classes
    :classes-search-text ""
-   :sort-classes-by "class-names-a-z"
-   :selected-class nil})
+   :sort-classes-by "a-z"
+   :selected-class dummy-single-class})
 
 (def page-state (atom initial-page-state))
 
@@ -191,47 +218,75 @@
   []
   [:div "TODO: Files Body"])
 
-(rum/defc ClassDefinition < rum/static
+(defn- sort-first [a b]
+  (compare (first a) (first b)))
+
+(rum/defc PropertyListItem < rum/static
+  [[key val]]
+  [:li.property-s9fe7
+    [:span.key-s2dab (str key ":")]
+    [:span.val-s1b79 val]])
+
+(rum/defc ClassDefinitionList < rum/static
   [d]
-  [:dl
-    [:dt "color"]
-    [:dd "#999"]])
+  (let [v (sort sort-first (into [] d))]
+    [:ul.definition-list-s7860
+      (map PropertyListItem v)]))
+
+(def default-preview-styles
+  {:min-height "100px"})
+
+(rum/defc ClassPreview < rum/static
+  [d]
+  [:div.preview-wrapper-sb56f
+    [:div {:style (merge d default-preview-styles)} "Lorem ipsum"]])
 
 (rum/defc ClassDetailBody < rum/static
-  []
-  [:div.right
-    [:h2.class-name-sb0bc "primary-btn" [:span.muted "-sb974"]
-      [:a {:href "#"} "rename"]]
-    ;; TODO: make "files" be a dashed underline
-    [:p "Used 32 times in 8 " [:span {:style {:text-decoration "underline"}} "files"]
-      ". Found on " [:code "<button>"] " elements."]
-    [:div.flex-container-s6d73
-      [:div.definition-s7e19
-        [:h4.header-s63ca "Definition"]
-        (ClassDefinition)]
-      [:div.preview-s376a
-        [:h4.header-s63ca "Preview"]
-        [:div "TODO: preview here"]]]])
+  [c]
+  (let [split-classname (split-classname (:classname c))]
+    [:div.right
+      [:h2.class-name-sb0bc
+        [:span (:name split-classname)]
+        [:span.muted-sff17 (:hash split-classname)]
+        [:a {:href "#"} "rename"]]
+      ;; TODO: make "files" be a dashed underline
+      [:p (str "Used " (:count c) " times in " (count (:files c)) " ")
+        [:span {:style {:text-decoration "underline"}} "files"]
+        ". Found on " [:code "<button>"] " elements."]
+      [:div.flex-container-s6d73
+        [:div.definition-s7e19
+          [:h4.header-s63ca "Definition"]
+          (ClassDefinitionList (:definition c))]
+        [:div.preview-s376a
+          [:h4.header-s63ca "Preview"]
+          (ClassPreview (:definition c))]]]))
 
 (rum/defc ClassesSortByOptions < rum/static
   [sort-by]
   [:select
     {:on-change on-change-classes-sort-by
      :value sort-by}
-    [:option {:value "class-names-a-z"} "Class Names A-Z"]
-    [:option {:value "class-names-z-a"} "Class Names Z-A"]
+    [:option {:value "a-z"} "A-Z"]
+    [:option {:value "z-a"} "Z-A"]
     ; [:option {:value "files-a-z"} "Files A-Z"]
     ; [:option {:value "files-z-a"} "Files Z-A"]
     [:option {:value "most-used"} "Most Used"]
     [:option {:value "least-used"} "Least Used"]])
 
+(defn- click-class-list-item [classname]
+  (when-let [new-class (get @all-classes classname)]
+    (swap! page-state assoc :selected-class new-class)))
+
 (rum/defc ClassListItem < rum/static
   [[classname c]]
-  [:li
-    [:div.classname-sfb8e classname]
-    [:div.small-count-s3096
-      (str (:count c) " instances, ")
-      (count (:files c)) " files"]])
+  (let [split-classname (split-classname classname)]
+    [:li {:on-click (partial click-class-list-item classname)}
+      [:div.classname-sfb8e
+        [:span (:name split-classname)]
+        [:span.muted-s5ce7 (:hash split-classname)]]
+      [:div.small-count-s3096
+        (str (:count c) " instances, ")
+        (count (:files c)) " files"]]))
 
 (rum/defc ClassList < rum/static
   [classes]
@@ -248,12 +303,12 @@
   (compare (-> b second :count) (-> a second :count)))
 
 (def sort-fns
-  {"class-names-a-z" class-name-comp
-   "class-names-z-a" class-name-comp
+  {"a-z" class-name-comp
+   "z-a" class-name-comp
    "most-used" usage-comp
    "least-used" usage-comp})
 
-(def reverse-sort-methods #{"class-names-z-a" "least-used"})
+(def reverse-sort-methods #{"z-a" "least-used"})
 
 ;; TODO: probably should memoize this
 (defn- filtered-and-sorted-classlist [search-txt sort-method]
@@ -290,7 +345,9 @@
       {:on-click click-new-class-btn} "New Class"]
     [:div.flex-container-s6d73
       (ClassesLeftPanel state)
-      (ClassDetailBody state)]])
+      (if (:selected-class state)
+        (ClassDetailBody (:selected-class state))
+        [:div "TODO: no class selected; prevent me from happening"])]])
 
 (rum/defc Tabs < rum/static
   [active-tab]
