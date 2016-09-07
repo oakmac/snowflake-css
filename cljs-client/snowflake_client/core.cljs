@@ -1,6 +1,7 @@
 (ns snowflake-client.core
   (:require
     [clojure.string :refer [blank? join lower-case split]]
+    [goog.string :as gstring]
     [rum.core :as rum]
     [snowflake-client.util :refer [by-id js-log log]]))
 
@@ -22,25 +23,24 @@
   {"container-53f43"
     {:classname "container-53f43"
      :count 3
-     :definition
-       {"display" "flex"
-        "max-width" "400px"
-        "overflow" "auto"}
-     :files
-       [{:filename "src-cljs/my_proj/bar.cljs", :count 1}
-        {:filename "src-cljs/my_proj/biz.cljs", :count 1}
-        {:filename "src-cljs/my_proj/foo.cljs", :count 1}]}
+     :definition {"display" "flex"
+                  "max-width" "400px"
+                  "overflow" "auto"}
+     :files [{:filename "src-cljs/my_proj/bar.cljs", :count 1}
+             {:filename "src-cljs/my_proj/biz.cljs", :count 1}
+             {:filename "src-cljs/my_proj/foo.cljs", :count 1}]
+     :instances [{:filename "src-cljs/my_proj/bar.cljs"
+                  :lines []}]}
 
    "label-4a5cc"
      {:classname "label-4a5cc"
       :count 22
-      :definition
-        {"color" "#aaa"
-         "display" "block"
-         "font-size" "11px"
-         "font-weight" "600"
-         "margin" "15px 0"
-         "text-transform" "uppercase"}
+      :definition {"color" "#aaa"
+                   "display" "block"
+                   "font-size" "11px"
+                   "font-weight" "600"
+                   "margin" "15px 0"
+                   "text-transform" "uppercase"}
       :files
         [{:filename "src-cljs/my_proj/bar.cljs", :count 5}
          {:filename "src-cljs/my_proj/biz.cljs", :count 2}
@@ -59,39 +59,47 @@
    "header-label-f23ea"
      {:classname "header-label-f23ea"
       :count 6
-      :definition
-        {"color" "#999"
-         "font-size" "14px"
-         "font-weight" "600"
-         "text-transform" "uppercase"}
-      :files
-        [{:filename "src-cljs/my_proj/bar.cljs", :count 2}
-         {:filename "src-cljs/my_proj/biz.cljs", :count 2}
-         {:filename "src-cljs/my_proj/foo.cljs", :count 2}]}
+      :definition {"color" "#999"
+                   "font-size" "14px"
+                   "font-weight" "600"
+                   "text-transform" "uppercase"}
+      :files [{:filename "src-cljs/my_proj/bar.cljs", :count 2}
+              {:filename "src-cljs/my_proj/biz.cljs", :count 2}
+              {:filename "src-cljs/my_proj/foo.cljs", :count 2}]}
 
    "list-label-27ddb"
      {:classname "list-label-27ddb"
       :count 8
-      :definition
-        {"font-family" "\"Open Sans Light\""
-         "font-weight" "300"
-         "font-size" "34px"
-         "border" "2px solid orange"
-         "padding" "20px"}
-      :files
-        [{:filename "templates/larissa.mustache", :count 8}]}
+      :definition {"font-family" "\"Open Sans Light\""
+                   "font-weight" "300"
+                   "font-size" "34px"
+                   "border" "2px solid orange"
+                   "padding" "10px 20px"}
+      :files [{:filename "templates/larissa.mustache", :count 8}]}
 
    "clr-7f0e5"
      {:classname "clr-7f0e5"
       :count 41
-      :definition
-        {"clear" "both"}
+      :definition {"clear" "both"}
       :files
         [{:filename "src-cljs/my_proj/biz.cljs", :count 41}]}})
 
 (def dummy-single-class (get dummy-class-data "clr-7f0e5"))
 
-(log dummy-single-class)
+(def dummy-files-list
+  ["src-cljs/my_proj/bar.cljs"
+   "src-cljs/my_proj/biz.cljs"
+   "src-cljs/my_proj/foo.cljs"
+   "templates/athens.mustache"
+   "templates/chalcis.mustache"
+   "templates/chania.mustache"
+   "templates/heraklion.mustache"
+   "templates/ioannina.mustache"
+   "templates/larissa.mustache"
+   "templates/patras.mustache"
+   "templates/rhodes.mustache"
+   "templates/thessaloniki.mustache"
+   "templates/volos.mustache"])
 
 (def all-classes (atom dummy-class-data))
 
@@ -186,8 +194,9 @@
 (rum/defc ClassListOLD < rum/static
   [class-list]
   [:div.class-col-5acc6
-    [:h4.col-title-2c774 "Classes"
-      [:div.count-13cac (str (count class-list) " total")]]
+    [:div
+      [:h4.col-title-2c774 "Classes"
+        [:div.count-13cac (str (count class-list) " total")]]]
     [:div.list-wrapper-7462e
       (map-indexed #(ClassRow [%1 %2]) class-list)]])
 
@@ -233,13 +242,52 @@
     [:ul.definition-list-s7860
       (map PropertyListItem v)]))
 
-(def default-preview-styles
-  {:min-height "100px"})
+;; TODO: figure out how this should work...
+(def default-preview-styles {})
 
 (rum/defc ClassPreview < rum/static
   [d]
   [:div.preview-wrapper-sb56f
     [:div {:style (merge d default-preview-styles)} "Lorem ipsum"]])
+
+(rum/defc ClassInstance < rum/static
+  [instance]
+  [:div "TODO: instance"])
+
+(def active-file-idx 2)
+
+(rum/defc FileRow2 < rum/static
+  [idx filename]
+  [:li {:class (str "file-sbc22" (when (= idx active-file-idx) " active-se4ea"))}
+    filename])
+
+(def dummy-text
+  ["</div>"
+   ""
+   "<button class=\"<?php if (user.isActive) { 'active-s9aae' } ?>\">"
+   "  Save Now"
+   "</button>"])
+
+;; NOTE: this component should show a preview of the text where the class was found
+;;       in the file. with things greyed out except for the class name
+;; TODO:
+;; - line numbers
+;; - highlight the class name
+(rum/defc TextLine < rum/static
+  [line]
+  (js/React.createElement "div" (js-obj "dangerouslySetInnerHTML"
+                                  (js-obj "__html" (str "<div class='code-line-se969'>"
+                                                        (gstring/htmlEscape line)
+                                                        "</div>")))))
+
+(rum/defc FilesView < rum/static
+  []
+  [:div.flex-container-s6d73
+    [:div.files-container-s0cbd
+      [:ul.files-list-sf03b
+        (map-indexed FileRow2 dummy-files-list)]]
+    [:div.text-container-sd0e9
+      (map TextLine dummy-text)]])
 
 (rum/defc ClassDetailBody < rum/static
   [c]
@@ -248,7 +296,7 @@
       [:h2.class-name-sb0bc
         [:span (:name split-classname)]
         [:span.muted-sff17 (:hash split-classname)]
-        [:a {:href "#"} "rename"]]
+        [:span.link-s4dda "rename"]]
       ;; TODO: make "files" be a dashed underline
       [:p (str "Used " (:count c) " times in " (count (:files c)) " ")
         [:span {:style {:text-decoration "underline"}} "files"]
@@ -259,7 +307,12 @@
           (ClassDefinitionList (:definition c))]
         [:div.preview-s376a
           [:h4.header-s63ca "Preview"]
-          (ClassPreview (:definition c))]]]))
+          (ClassPreview (:definition c))]]
+      [:div
+        [:h4.header-s63ca "Usage" [:span.small-link-sf848 "see all"]]
+        (FilesView)]]))
+        ;; TODO: create a view where all of the instances are listed
+        ;;       you can scroll down the page and see the files
 
 (rum/defc ClassesSortByOptions < rum/static
   [sort-by]
@@ -363,7 +416,7 @@
   [state]
   [:div.container-53f43
     [:h1.title-5ac1e "Snowflake CSS"]
-    (Tabs (:active-tab state))
+    ;; (Tabs (:active-tab state))
     (condp = (:active-tab state)
       :classes
       (ClassesBody state)

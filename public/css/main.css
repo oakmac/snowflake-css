@@ -216,10 +216,16 @@ body {
   font-weight: 300;
 }
 
-.class-name-sb0bc a {
+.link-s4dda {
+  color: #02c;
+  cursor: pointer;
   display: inline-block;
-  font-size: 14px;
-  margin-left: 10px;
+  font-size: 16px;
+  margin-left: 8px;
+}
+
+.link-s4dda:hover {
+  text-decoration: underline;
 }
 
 .definition-s7e19 {
@@ -299,5 +305,55 @@ body {
 }
 
 .preview-wrapper-sb56f {
-  
+
+}
+
+.small-link-sf848 {
+  color: #02c;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 400;
+  margin-left: 5px;
+  text-transform: none;
+}
+
+.small-link-sf848:hover {
+  text-decoration: underline;
+}
+
+.files-container-s0cbd {
+  flex: 30;
+}
+
+.text-container-sd0e9 {
+  flex: 70;
+}
+
+.files-list-sf03b {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.file-sbc22 {
+  cursor: pointer;
+  font-family: "Droid Sans Mono";
+  font-size: 12px;
+  padding: 8px 0;
+}
+
+.file-sbc22:hover {
+  background: #eee;
+}
+
+.active-se4ea {
+  background: #cfcff7;
+}
+
+.code-line-se969 {
+  color: #888;
+  font-family: "Droid Sans Mono";
+  font-size: 12px;
+  min-height: 18px;
 }

@@ -1,9 +1,9 @@
 # CLJS compiler folder
-/target
+target
 
 # CLJS compiled files
-/public/js/app.js
-/public/js/app.min.js
+public/js/app-dev.js
+public/js/app-prod.js
 app.js
 
 # ignore diffs

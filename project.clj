@@ -6,11 +6,11 @@
             :url "https://github.com/oakmac/snowflake-css/blob/master/LICENSE.md"
             :distribution :repo}
 
-  :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.170"]
-                 [rum "0.5.0"]]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/clojurescript "1.8.40"]
+                 [rum "0.10.5"]]
 
-  :plugins [[lein-cljsbuild "1.1.1"]]
+  :plugins [[lein-cljsbuild "1.1.2"]]
 
   :source-paths ["src"]
 
@@ -24,12 +24,12 @@
       [{:id "client-dev"
         :source-paths ["cljs-client"]
         :compiler {:optimizations :whitespace
-                   :output-to "public/js/app.js"}}
+                   :output-to "public/js/app-dev.js"}}
 
-       {:id "client-min"
+       {:id "client-prod"
         :source-paths ["cljs-client"]
         :compiler {:optimizations :advanced
-                   :output-to "public/js/app.min.js"
+                   :output-to "public/js/app-prod.js"
                    :pretty-print false}}
 
        {:id "server"
