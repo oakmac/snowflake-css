@@ -1,3 +1,6 @@
+# npm packages
+node_modules
+
 # CLJS compiler folder
 target
 
@@ -8,3 +11,6 @@ app.js
 
 # ignore diffs
 *.diff
+
+# protect our config file
+config.json

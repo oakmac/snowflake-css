@@ -1,0 +1,13 @@
+{
+  "name": "snowflake-server",
+  "description": "Snowflake CSS server and tools.",
+  "version": "0.0.1",
+  "dependencies": {
+    "express": "4.13.4",
+    "fs-plus": "2.9.1",
+    "grunt": "0.4.5",
+    "grunt-contrib-less": "1.0.1",
+    "grunt-contrib-watch": "0.6.1",
+    "moment": "2.6.0"
+  }
+}
