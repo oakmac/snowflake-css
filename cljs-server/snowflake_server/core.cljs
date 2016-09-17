@@ -108,9 +108,9 @@
     (deref classes)))
 
 (defn- load-project-configs! []
-  (doseq [p (keys @projects)]
-    (let [project-config (read-project-config p)]
-      (swap! projects assoc p project-config))))
+  (doseq [path (keys @projects)]
+    (let [project-config (read-project-config path)]
+      (swap! projects update-in [path] merge project-config))))
 
 (defn- load-projects-file! []
   (let [projects-vector (jsonfile->clj projects-file)
@@ -122,6 +122,17 @@
 
 (load-projects-file!)
 (load-project-configs!)
+
+(defn- load-classes! [p]
+  (let [project-path (:path p)
+        css-glob-patterns (get-in p [:css-files :include])
+        first-pattern (first css-glob-patterns)
+        glob-options (js-obj "cwd" project-path)
+        ;; css-files (.sync glob (first css-glob-patterns) (js-obj "root" project-path))]
+        files (.sync glob first-pattern glob-options)]
+    (js-log files)))
+
+(load-classes! (first (vals @projects)))
 
 ;;------------------------------------------------------------------------------
 ;; Server Initialization
