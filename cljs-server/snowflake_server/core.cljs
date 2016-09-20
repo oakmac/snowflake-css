@@ -1,10 +1,13 @@
 (ns snowflake-server.core
   (:require
     [cljs.nodejs :as nodejs]
-    [clojure.string :refer [split split-lines]]
+    [clojure.string :refer [split-lines]]
+    [clojure.set :refer [difference union]]
     [clojure.walk :refer [keywordize-keys]]
     [oakmac.util :refer [atom-logger js-log log]]
-    [snowflake-server.config :refer [config]]))
+    [snowflake-server.config :refer [config]]
+    [snowflake-server.util :refer [jsonfile->clj
+                                   read-flakes-from-files]]))
 
 (nodejs/enable-util-print!)
 
@@ -18,49 +21,25 @@
 (def glob (js/require "glob"))
 
 ;;------------------------------------------------------------------------------
-;; Util
-;;------------------------------------------------------------------------------
-
-;; TODO: wrap this in a try/catch
-(defn- jsonfile->clj [f]
-  (->> (.readFileSync fs f "utf8")
-       js/JSON.parse
-       js->clj
-       keywordize-keys))
-
-;;------------------------------------------------------------------------------
 ;; Projects
 ;;------------------------------------------------------------------------------
 
-;; NOTE: this function would be a good candidate for some tests
 (defn- expand-config
   "Expand a shorthand config to it's full form."
   [config]
   (loop [c config]
     (cond
+      (string? (:app-files c))
+      (recur (assoc c :app-files [(:app-files c)]))
+
+      (string? (:app-files-exclude c))
+      (recur (assoc c :app-files-exclude [(:app-files-exclude c)]))
+
       (string? (:css-files c))
       (recur (assoc c :css-files [(:css-files c)]))
 
-      (vector? (:css-files c))
-      (recur (assoc c :css-files {:include (:css-files c)}))
-
-      (string? (get-in c [:css-files :include]))
-      (recur (assoc-in c [:css-files :include] [(get-in c [:css-files :include])]))
-
-      (string? (get-in c [:css-files :exclude]))
-      (recur (assoc-in c [:css-files :exclude] [(get-in c [:css-files :exclude])]))
-
-      (string? (:application-files c))
-      (recur (assoc c :application-files [(:application-files c)]))
-
-      (vector? (:application-files c))
-      (recur (assoc c :application-files {:include (:application-files c)}))
-
-      (string? (get-in c [:application-files :include]))
-      (recur (assoc-in c [:application-files :include] [(get-in c [:application-files :include])]))
-
-      (string? (get-in c [:application-files :exclude]))
-      (recur (assoc-in c [:application-files :exclude] [(get-in c [:application-files :exclude])]))
+      (string? (:css-files-exclude c))
+      (recur (assoc c :css-files-exclude [(:css-files-exclude c)]))
 
       :else
       c)))
@@ -75,47 +54,28 @@
 
 (def projects-file (str (.getHomeDirectory fs) "/.snowflake-projects.json"))
 
-(def projects (atom {}))
+(def example-state
+  {"/home/user1/project1/"
+    {:path "same as the key"
+     :name "Project 1" ;; project display name
+     :app-files ["src-cljs/**"] ;; vector of glob patterns for the application files
+     :app-files-exclude ""
+     :css-files "less/*.less" ;; vector of glob patterns for the CSS files
+     :css-files-exclude ""
+     :css-flakes [] ;; vector of CSS flakes
+     :app-flakes []}}) ;; vector of app flakes}})
 
-(def snowflake-regex #"([a-z0-9]+-){1,}([abcdef0-9]){5}")
-
-(defn- snowflake-class?
-  "Is string s a snowflake class?"
-  [s]
-  (let [the-hash (last (split s "-"))]
-    (and (.test snowflake-regex s) ;; must match this regex
-         (.test #"\d" s)           ;; must have some numbers
-         (.test #"[a-z]" s)        ;; must have some alpha characters
-         (.test #"\d" the-hash)    ;; hash must contain at least one number
-         (.test #"[a-z]" the-hash)))) ;; has must contain at least one alpha character
-
-;; NOTE: this function could probably be cleaner
-(defn- get-classes-from-file [file]
-  (let [file-contents (.readFileSync fs file "utf8")
-        lines (split-lines file-contents)
-        classes (atom [])]
-    (dorun
-      (map-indexed
-        (fn [idx line]
-          (let [classes1 (re-seq snowflake-regex line)
-                classes2 (map first classes1)
-                classes3 (filter snowflake-class? classes2)]
-            (doseq [c classes3]
-              (swap! classes conj {:class c
-                                   :file file
-                                   :line-no (inc idx)}))))
-        lines))
-    (deref classes)))
+(def state (atom {}))
 
 (defn- load-project-configs! []
-  (doseq [path (keys @projects)]
+  (doseq [path (keys @state)]
     (let [project-config (read-project-config path)]
-      (swap! projects update-in [path] merge project-config))))
+      (swap! state update-in [path] merge project-config))))
 
 (defn- load-projects-file! []
   (let [projects-vector (jsonfile->clj projects-file)
         initial-configs (map (fn [x] {:path x}) projects-vector)]
-    (reset! projects (zipmap projects-vector initial-configs))))
+    (reset! state (zipmap projects-vector initial-configs))))
 
 ;; NOTE: useful for debugging
 ;; (add-watch projects :log atom-logger)
@@ -123,16 +83,43 @@
 (load-projects-file!)
 (load-project-configs!)
 
-(defn- load-classes! [p]
-  (let [project-path (:path p)
-        css-glob-patterns (get-in p [:css-files :include])
-        first-pattern (first css-glob-patterns)
-        glob-options (js-obj "cwd" project-path)
-        ;; css-files (.sync glob (first css-glob-patterns) (js-obj "root" project-path))]
-        files (.sync glob first-pattern glob-options)]
-    (js-log files)))
+(defn- glob->files
+  "Given a cwd and a glob pattern, returns a set of the matched files."
+  [cwd pattern]
+  (let [glob-options (js-obj "cwd" cwd
+                             "nodir" true
+                             "realpath" true)]
+    (set (.sync glob pattern glob-options))))
 
-(load-classes! (first (vals @projects)))
+(defn- globs->files
+  "Given a collection of glob patterns, return a set of the matched files."
+  [cwd patterns]
+  (reduce
+    (fn [files pattern]
+      (union files (glob->files cwd pattern)))
+    #{}
+    patterns))
+
+(defn- read-flakes-for-project! [prj]
+  (let [project-path (:path prj)
+        app-files (globs->files project-path (:app-files prj))
+        exclude-app-files (globs->files project-path (:app-files-exclude prj []))
+        app-files (difference app-files exclude-app-files)
+        app-flakes (read-flakes-from-files app-files)
+        css-files (globs->files project-path (:css-files prj))
+        exclude-css-files (globs->files project-path (:css-files-exclude prj []))
+        css-files (difference css-files exclude-css-files)
+        css-flakes (read-flakes-from-files css-files)]
+    (swap! state update-in [project-path] assoc
+      :app-flakes app-flakes
+      :css-flakes css-flakes)))
+
+; (read-flakes-for-project! (first (vals @state)))
+;
+; (let [x (:app-flakes (first (vals @state)))
+;       y (:css-flakes (first (vals @state)))]
+;   (log (str "app flakes: " (count x)))
+;   (log (str "css flakes: " (count y))))
 
 ;;------------------------------------------------------------------------------
 ;; Server Initialization
