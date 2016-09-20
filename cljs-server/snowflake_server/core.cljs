@@ -114,8 +114,6 @@
       :app-flakes app-flakes
       :css-flakes css-flakes)))
 
-;; foo
-
 ; (read-flakes-for-project! (first (vals @state)))
 ;
 ; (let [x (:app-flakes (first (vals @state)))
