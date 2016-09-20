@@ -16,8 +16,8 @@
   :source-paths ["src"]
 
   :clean-targets ["app.js"
-                  "public/js/app.js"
-                  "public/js/app.min.js"
+                  "public/js/app-dev.js"
+                  "public/js/app-prod.js"
                   "target"]
 
   :cljsbuild
@@ -27,11 +27,11 @@
         :compiler {:optimizations :whitespace
                    :output-to "public/js/app-dev.js"}}
 
-       {:id "client-prod"
-        :source-paths ["cljs-client"]
-        :compiler {:optimizations :advanced
-                   :output-to "public/js/app-prod.js"
-                   :pretty-print false}}
+      ;  {:id "client-prod"
+      ;   :source-paths ["cljs-client"]
+      ;   :compiler {:optimizations :advanced
+      ;              :output-to "public/js/app-prod.js"
+      ;              :pretty-print false}}
 
        {:id "server"
         :source-paths ["cljs-server"]

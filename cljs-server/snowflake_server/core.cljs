@@ -19,6 +19,8 @@
 (def express-static (aget express "static"))
 (def fs (js/require "fs-plus"))
 (def glob (js/require "glob"))
+(def http (js/require "http"))
+(def io-lib (js/require "socket.io"))
 
 ;;------------------------------------------------------------------------------
 ;; Projects
@@ -122,17 +124,33 @@
 ;   (log (str "css flakes: " (count y))))
 
 ;;------------------------------------------------------------------------------
+;; Socket Events
+;;------------------------------------------------------------------------------
+
+(defn- on-socket-disconnect []
+  (js-log "socket connection lost"))
+
+(defn- on-socket-connection [socket]
+  (js-log "socket connection established!")
+  (.on socket "disconnect" on-socket-disconnect))
+
+;;------------------------------------------------------------------------------
 ;; Server Initialization
 ;;------------------------------------------------------------------------------
 
 (def app (express))
+(def server nil)
+(def io nil)
 
 (defn -main [& args]
-  (doto app
-    ;; middleware
-    (.use (express-static (str js/__dirname "/public")))
+  ;; serve static files out of /public
+  (.use app (express-static (str js/__dirname "/public")))
+  ;; start the server
+  (set! server (.listen app (:port config)))
+  ;; connect socket.io
+  (set! io (.listen io-lib server))
+  (.on io "connection" on-socket-connection)
 
-    (.listen (:port config)))
-  (js-log (str "Snowflake server running on port " (:port config))))
+  (js-log (str "Snowflake CSS server running on port " (:port config))))
 
 (set! *main-cli-fn* -main)

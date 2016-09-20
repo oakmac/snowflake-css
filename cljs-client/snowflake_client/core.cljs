@@ -445,12 +445,30 @@
 (add-watch page-state :main on-change-page-state)
 
 ;;------------------------------------------------------------------------------
+;; Socket Events
+;;------------------------------------------------------------------------------
+
+(def localhost
+  (str (aget js/location "protocol")
+       "//"
+       (aget js/location "host")))
+
+(defn- on-foo []
+  (js-log "foo received!"))
+
+(defn- connect-socket-io! []
+  (let [socket (.connect js/io localhost)]
+    (.on socket "foo" on-foo)))
+
+;;------------------------------------------------------------------------------
 ;; Global App Init
 ;;------------------------------------------------------------------------------
 
 (defn- init!
   "Global app init."
   []
+  (connect-socket-io!)
+  ;; trigger page render
   (swap! page-state identity))
 
 (.addEventListener js/window "load" init!)
