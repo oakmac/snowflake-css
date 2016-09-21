@@ -1,4 +1,4 @@
-# Snowflake CSS [WORK IN PROGRESS]
+# Snowflake CSS **[WORK IN PROGRESS]**
 
 ## Project Status
 
