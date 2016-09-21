@@ -125,13 +125,15 @@
 ;; App State
 ;;------------------------------------------------------------------------------
 
-(def initial-page-state
+(def initial-app-state
   {:active-tab :classes
    :classes-search-text ""
+   :active-project nil
+   :projects nil
    :sort-classes-by "a-z"
    :selected-class dummy-single-class})
 
-(def page-state (atom initial-page-state))
+(def app-state (atom initial-app-state))
 
 ;;------------------------------------------------------------------------------
 ;; Events
@@ -139,7 +141,7 @@
 
 (defn- on-change-input [js-evt]
   (let [new-text (aget js-evt "currentTarget" "value")]
-    (swap! page-state assoc :search-text new-text)))
+    (swap! app-state assoc :search-text new-text)))
 
 (defn- mark-active [active-idx idx itm]
   (if (= active-idx idx)
@@ -150,12 +152,12 @@
   (let [target-el (aget js-evt "currentTarget")
         active-idx (int (.getAttribute target-el "data-idx"))
         classname (.getAttribute target-el "data-classname")
-        current-class-list (:classes @page-state)
+        current-class-list (:classes @app-state)
         class-list-with-no-active (map #(dissoc % :active?) current-class-list)
         new-class-list (map-indexed (partial mark-active active-idx) class-list-with-no-active)]
     ;; defensive - make sure the class exists
     (when (get @all-classes classname false)
-      (swap! page-state assoc :classes (into [] new-class-list)
+      (swap! app-state assoc :classes (into [] new-class-list)
                               :files (get-in @all-classes [classname :files])
                               :selected-classname classname))))
 
@@ -210,14 +212,14 @@
 
 (defn- change-class-search [js-evt]
   (let [new-text (aget js-evt "currentTarget" "value")]
-    (swap! page-state assoc :classes-search-text new-text)))
+    (swap! app-state assoc :classes-search-text new-text)))
 
 (defn- on-change-classes-sort-by [js-evt]
   (let [new-value (aget js-evt "currentTarget" "value")]
-    (swap! page-state assoc :sort-classes-by new-value)))
+    (swap! app-state assoc :sort-classes-by new-value)))
 
 (defn- click-new-class-btn []
-  (swap! page-state assoc :new-class-modal-showing? true))
+  (swap! app-state assoc :new-class-modal-showing? true))
 
 (rum/defc UtilBody < rum/static
   []
@@ -328,7 +330,7 @@
 
 (defn- click-class-list-item [classname]
   (when-let [new-class (get @all-classes classname)]
-    (swap! page-state assoc :selected-class new-class)))
+    (swap! app-state assoc :selected-class new-class)))
 
 (rum/defc ClassListItem < rum/static
   [[classname c]]
@@ -412,10 +414,25 @@
     [:li [:a {:class (when (= active-tab :util) "active-sb974")
               :href "#/util"} "Utilities"]]])
 
-(rum/defc App < rum/static
+(defn- on-change-project-select [js-evt])
+
+(rum/defc Header < rum/static
+  []
+  [:header
+    [:h1 "Snowflake CSS"]
+    [:h2 "they're all special snowflakes..."]
+    [:select {:on-change on-change-project-select}
+      [:option "A"]
+      [:option "B"]]])
+
+(rum/defc SnowflakeApp < rum/static
+  "Top-level component."
   [state]
   [:div.container-53f43
     [:h1.title-5ac1e "Snowflake CSS"]
+
+    (Header)
+
     ;; (Tabs (:active-tab state))
     (condp = (:active-tab state)
       :classes
@@ -437,12 +454,12 @@
 
 (def app-container-el (by-id "appContainer"))
 
-(defn- on-change-page-state [_kwd _the-atom _old-state new-state]
-  ;; render the new state
-  (rum/request-render
-    (rum/mount (App new-state) app-container-el)))
+(defn- on-change-app-state
+  [_kwd _the-atom _old-state new-state]
+  (rum/mount (SnowflakeApp new-state) app-container-el))
 
-(add-watch page-state :main on-change-page-state)
+;; render the page every time the state changes
+(add-watch app-state :render-loop on-change-app-state)
 
 ;;------------------------------------------------------------------------------
 ;; Socket Events
@@ -469,6 +486,6 @@
   []
   (connect-socket-io!)
   ;; trigger page render
-  (swap! page-state identity))
+  (swap! app-state identity))
 
 (.addEventListener js/window "load" init!)
