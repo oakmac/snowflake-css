@@ -54,6 +54,8 @@ body {
 .title-5ac1e {
   font-family: "Open Sans Light";
   font-weight: 300;
+  margin: 0;
+  padding: 0;
 }
 
 .container-53f43 {
@@ -143,10 +145,6 @@ body {
   background: #49f1ff;
 }
 
-/*----------------------------------------------------------------------------*
- * Snowflake Classes                                                          *
- *----------------------------------------------------------------------------*/
-
 .flex-container-s6d73 {
   display: flex;
 }
@@ -176,8 +174,10 @@ body {
 
 .tabs-sd691 a {
   border: 1px solid #ccc;
+  border-bottom: 0;
   display: inline-block;
   padding: 8px 16px;
+  text-decoration: none;
 }
 
 .active-sb974 {
@@ -362,4 +362,18 @@ body {
   font-family: "Droid Sans Mono";
   font-size: 12px;
   min-height: 18px;
+}
+
+.header-64ed8 {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.left-227af {
+  flex: 1;
+}
+
+.right-b2a84 {
+  flex: 1;
+  text-align: right;
 }

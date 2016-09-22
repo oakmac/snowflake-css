@@ -121,13 +121,18 @@
   (doseq [prj (vals @state)]
     (read-flakes-for-project! prj)))
 
-(def one-minute (* 60 1000))
+;; NOTE: this architecture needs to be re-thought
+;; this is fine for development purposes though
 
-;; lol
+;; reload everything every minute
+(def one-minute (* 60 1000))
 (js/setInterval load-everything! one-minute)
+
+;; push the state to the client every second
+(def one-second 1000)
 (js/setInterval
   (fn [] (swap! state identity))
-  2000)
+  one-second)
 
 ;;------------------------------------------------------------------------------
 ;; Socket Events
