@@ -1,5 +1,6 @@
 (ns snowflake-client.core
   (:require
+    [cljs.reader :refer [read-string]]
     [clojure.string :refer [blank? join lower-case split]]
     [goog.string :as gstring]
     [rum.core :as rum]
@@ -127,9 +128,10 @@
 
 (def initial-app-state
   {:active-tab :classes
-   :classes-search-text ""
+   :flakes-list-search-txt ""
    :active-project nil
    :projects nil
+   :socket-connected? false
    :sort-classes-by "a-z"
    :selected-class dummy-single-class})
 
@@ -158,8 +160,8 @@
     ;; defensive - make sure the class exists
     (when (get @all-classes classname false)
       (swap! app-state assoc :classes (into [] new-class-list)
-                              :files (get-in @all-classes [classname :files])
-                              :selected-classname classname))))
+                             :files (get-in @all-classes [classname :files])
+                             :selected-classname classname))))
 
 ;;------------------------------------------------------------------------------
 ;; Components
@@ -182,26 +184,6 @@
     [:div.list-wrapper-7462e
       (map FileRow files)]])
 
-(rum/defc ClassRow < rum/static
-  [[idx c]]
-  [:div {:class (str "single-class-f529a" (when (:active? c) " active-8ff04"))
-         :data-classname (:classname c)
-         :data-idx idx
-         :on-mouse-enter on-mouse-enter-class-row}
-    (:classname c)
-    [:div.small-facts-6b6e3
-      (str (count (:files c)) " files, "
-           (:count c) " instances")]])
-
-(rum/defc ClassListOLD < rum/static
-  [class-list]
-  [:div.class-col-5acc6
-    [:div
-      [:h4.col-title-2c774 "Classes"
-        [:div.count-13cac (str (count class-list) " total")]]]
-    [:div.list-wrapper-7462e
-      (map-indexed #(ClassRow [%1 %2]) class-list)]])
-
 (rum/defc MainInput < rum/static
   [search-text]
   [:input.main-input-f14b8 {
@@ -212,7 +194,7 @@
 
 (defn- change-class-search [js-evt]
   (let [new-text (aget js-evt "currentTarget" "value")]
-    (swap! app-state assoc :classes-search-text new-text)))
+    (swap! app-state assoc :flakes-list-search-txt new-text)))
 
 (defn- on-change-classes-sort-by [js-evt]
   (let [new-value (aget js-evt "currentTarget" "value")]
@@ -378,28 +360,27 @@
       (reverse classes)
       classes)))
 
-(rum/defc ClassesLeftPanel < rum/static
-  [{:keys [classes-search-text sort-classes-by]}]
-  (let [classes (filtered-and-sorted-classlist classes-search-text sort-classes-by)]
+(rum/defc LeftPanel < rum/static
+  [{:keys [flakes-list-search-txt sort-classes-by]}]
+  (let [classes (filtered-and-sorted-classlist flakes-list-search-txt sort-classes-by)]
     [:div.left
       [:input.search-input-s24fa
         {:on-change change-class-search
-         :placeholder "Search Classes"
+         :placeholder "Search Flakes"
          :type "text"
-         :value classes-search-text}]
+         :value flakes-list-search-txt}]
       [:label.sort-by-s7ff8 "Sort By:"
         (ClassesSortByOptions sort-classes-by)]
       (if (empty? classes)
-        [:div.no-results-s993d "No classes found"]
+        [:div.no-results-s993d "No flakes found"]
         (ClassList classes))]))
 
-(rum/defc ClassesBody < rum/static
+(rum/defc MainBody < rum/static
   [state]
   [:div
-    [:button.primary-s04e4
-      {:on-click click-new-class-btn} "New Class"]
+    ;; [:button.primary-s04e4 {:on-click click-new-class-btn} "New Flake"]
     [:div.flex-container-s6d73
-      (ClassesLeftPanel state)
+      (LeftPanel state)
       (if (:selected-class state)
         (ClassDetailBody (:selected-class state))
         [:div "TODO: no class selected; prevent me from happening"])]])
@@ -414,39 +395,62 @@
     [:li [:a {:class (when (= active-tab :util) "active-sb974")
               :href "#/util"} "Utilities"]]])
 
-(defn- on-change-project-select [js-evt])
+(defn- on-change-project-select [js-evt]
+  (let [project-path (aget js-evt "currentTarget" "value")]
+    (swap! app-state assoc :active-project project-path)))
+
+(rum/defc ProjectOption < rum/static
+  [{:keys [name path]}]
+  [:option {:value path} name])
 
 (rum/defc Header < rum/static
-  []
+  [active-project-path projects]
   [:header
-    [:h1 "Snowflake CSS"]
-    [:h2 "they're all special snowflakes..."]
-    [:select {:on-change on-change-project-select}
-      [:option "A"]
-      [:option "B"]]])
+    [:h1.title-5ac1e "Snowflake CSS"]
+    [:div.tagline-1119f "they're all special snowflakes..."]
+    [:select {:on-change on-change-project-select
+              :value active-project-path}
+      (map ProjectOption projects)]])
 
-(rum/defc SnowflakeApp < rum/static
-  "Top-level component."
+(rum/defc Body2 < rum/static
+  [{:keys [name]}]
+  [:h2 name])
+
+;; TODO: style this
+(rum/defc EstablishingConnectionScreen < rum/static
+  []
+  [:div "Establishing socket connection..."])
+
+;; TODO: style this
+(rum/defc LoadingProjectsScreen < rum/static
+  []
+  [:div "Loading projects..."])
+
+(defn- condensed-projects [state]
+  (->> state
+       :projects
+       vals
+       (map #(select-keys % #{:name :path}))))
+
+(rum/defc SnowflakeAppBody < rum/static
   [state]
   [:div.container-53f43
-    [:h1.title-5ac1e "Snowflake CSS"]
+    (Header (:active-project state) (condensed-projects state))
+    (MainBody state)])
 
-    (Header)
+(rum/defc SnowflakeApp < rum/static
+  [state]
+  (cond
+    (not (:socket-connected? state))
+    (EstablishingConnectionScreen)
 
-    ;; (Tabs (:active-tab state))
-    (condp = (:active-tab state)
-      :classes
-      (ClassesBody state)
+    (not (:projects state))
+    (LoadingProjectsScreen)
 
-      :files
-      (FilesBody)
+    ;; TODO: socket disconnected / reconnecting screens
 
-      :util
-      (UtilBody)
-
-      ;; NOTE: this should never happen
-      :else
-      [:div "Error: invalid :active-tab value"])])
+    :else
+    (SnowflakeAppBody state)))
 
 ;;------------------------------------------------------------------------------
 ;; Render Loop
@@ -470,12 +474,17 @@
        "//"
        (aget js/location "host")))
 
-(defn- on-foo []
-  (js-log "foo received!"))
+(defn- on-socket-connection []
+  (swap! app-state assoc :socket-connected? true))
+
+(defn- receive-state-from-server [new-state-edn]
+  (let [new-state (read-string new-state-edn)]
+    (swap! app-state assoc :projects new-state)))
 
 (defn- connect-socket-io! []
   (let [socket (.connect js/io localhost)]
-    (.on socket "foo" on-foo)))
+    (.on socket "connect" on-socket-connection)
+    (.on socket "new-state" receive-state-from-server)))
 
 ;;------------------------------------------------------------------------------
 ;; Global App Init
@@ -487,5 +496,6 @@
   (connect-socket-io!)
   ;; trigger page render
   (swap! app-state identity))
+
 
 (.addEventListener js/window "load" init!)

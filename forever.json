@@ -1,4 +1,5 @@
 {
+  "append": true,
   "uid": "snowflake",
   "watch": true,
   "script": "app.js"

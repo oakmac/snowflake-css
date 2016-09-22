@@ -21,9 +21,10 @@
 (def glob (js/require "glob"))
 (def http (js/require "http"))
 (def io-lib (js/require "socket.io"))
+(def path-lib (js/require "path"))
 
 ;;------------------------------------------------------------------------------
-;; Projects
+;; State
 ;;------------------------------------------------------------------------------
 
 (defn- expand-config
@@ -47,14 +48,14 @@
       c)))
 
 ;; TODO:
-;; - change this to use the path module
 ;; - handle the case where there is no snowflake.config file
 (defn- read-project-config [path]
- (let [config-file (str path "snowflake.json")
+ (let [config-file (.join path-lib path "snowflake.json")
        project-config (jsonfile->clj config-file)]
    (expand-config project-config)))
 
-(def projects-file (str (.getHomeDirectory fs) "/.snowflake-projects.json"))
+(def homedir (.getHomeDirectory fs))
+(def projects-file (.join path-lib homedir ".snowflake-projects.json"))
 
 (def example-state
   {"/home/user1/project1/"
@@ -69,21 +70,17 @@
 
 (def state (atom {}))
 
-(defn- load-project-configs! []
-  (doseq [path (keys @state)]
-    (let [project-config (read-project-config path)]
-      (swap! state update-in [path] merge project-config))))
+;; NOTE: useful for debugging
+;; (add-watch projects :log atom-logger)
+
+(defn- load-project-config! [path]
+  (let [project-config (read-project-config path)]
+    (swap! state update-in [path] merge project-config)))
 
 (defn- load-projects-file! []
   (let [projects-vector (jsonfile->clj projects-file)
         initial-configs (map (fn [x] {:path x}) projects-vector)]
     (reset! state (zipmap projects-vector initial-configs))))
-
-;; NOTE: useful for debugging
-;; (add-watch projects :log atom-logger)
-
-(load-projects-file!)
-(load-project-configs!)
 
 (defn- glob->files
   "Given a cwd and a glob pattern, returns a set of the matched files."
@@ -116,23 +113,41 @@
       :app-flakes app-flakes
       :css-flakes css-flakes)))
 
-; (read-flakes-for-project! (first (vals @state)))
-;
-; (let [x (:app-flakes (first (vals @state)))
-;       y (:css-flakes (first (vals @state)))]
-;   (log (str "app flakes: " (count x)))
-;   (log (str "css flakes: " (count y))))
+;; TODO: this is inefficient and slow, needs to be refactored to be asynchronous
+(defn- load-everything! []
+  (load-projects-file!)
+  (doseq [path (keys @state)]
+    (load-project-config! path))
+  (doseq [prj (vals @state)]
+    (read-flakes-for-project! prj)))
+
+(def one-minute (* 60 1000))
+
+;; lol
+(js/setInterval load-everything! one-minute)
+(js/setInterval
+  (fn [] (swap! state identity))
+  2000)
 
 ;;------------------------------------------------------------------------------
 ;; Socket Events
 ;;------------------------------------------------------------------------------
 
-(defn- on-socket-disconnect []
-  (js-log "socket connection lost"))
+(def io nil)
+
+(defn- on-socket-disconnect [])
+  ;; (js-log "socket connection lost"))
 
 (defn- on-socket-connection [socket]
-  (js-log "socket connection established!")
+  ;; (js-log "socket connection established!")
   (.on socket "disconnect" on-socket-disconnect))
+
+;; TODO: switch to using transit.cljs here
+(defn- send-state-to-clients [_ _ _ new-state]
+  ;; (js-log "sending state to clients...")
+  (.emit io "new-state" (pr-str new-state)))
+
+(add-watch state :socket-emit send-state-to-clients)
 
 ;;------------------------------------------------------------------------------
 ;; Server Initialization
@@ -140,16 +155,17 @@
 
 (def app (express))
 (def server nil)
-(def io nil)
 
 (defn -main [& args]
   ;; serve static files out of /public
-  (.use app (express-static (str js/__dirname "/public")))
+  (.use app (express-static (.join path-lib js/__dirname "public")))
   ;; start the server
   (set! server (.listen app (:port config)))
   ;; connect socket.io
   (set! io (.listen io-lib server))
   (.on io "connection" on-socket-connection)
+
+  (load-everything!)
 
   (js-log (str "Snowflake CSS server running on port " (:port config))))
 

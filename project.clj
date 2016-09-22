@@ -8,6 +8,7 @@
 
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.8.40"]
+                 [com.cognitect/transit-cljs "0.8.239"]
                  [com.oakmac/util "2.0.1"]
                  [rum "0.10.5"]]
 

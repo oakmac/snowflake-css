@@ -25,9 +25,8 @@ When in doubt, make a new class and let the tooling sort out the rest.
 
 ## When in doubt, add a new class
 
-The cost to adding a new
-style definition is cheap and there is practically no penalty for adding new
-ones.
+The cost to adding a new style definition is cheap and there is effectively no
+penalty for adding new ones.
 
 ## Easily share styles
 
@@ -196,21 +195,19 @@ answers to most of our questions:
 Imagine the following chunk of code if you knew that every CSS selector
 consisted of a single class selector and was uniquely named:
 
-``` example goes here ```
+```
+TODO: example goes here
+```
 
 Some of the questions from the previous example remain, such as "What does this
 look like visually in the browser?". The rest either don't apply or have simple
 answers via tooling.
-
-
 
 You can start using UUCSS with your project today. Any UUCSS class names should
 be unique enough not to clash with existing style rules and you can confidently
 add a UUCSS stylesheet to your project without worrying about breaking existing
 styles (unless your markup has exactly the classes referenced in the included
 sheet).
-
-
 
 TODO: need a picture of a CSS rule, with callouts that show what is a rule, what
 is a selector, and what is a declaration
