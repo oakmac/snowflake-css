@@ -1,13 +1,13 @@
-(ns snowflake-server.core
+(ns com.oakmac.snowflake.server.core
   (:require
     [cljs.nodejs :as nodejs]
     [clojure.string :refer [split-lines]]
     [clojure.set :refer [difference union]]
     [clojure.walk :refer [keywordize-keys]]
     [oakmac.util :refer [atom-logger js-log log]]
-    [snowflake-server.config :refer [config]]
-    [snowflake-server.util :refer [jsonfile->clj
-                                   read-flakes-from-files]]))
+    [com.oakmac.snowflake.server.config :refer [config]]
+    [com.oakmac.snowflake.server.util :refer [jsonfile->clj
+                                              read-flakes-from-files]]))
 
 (nodejs/enable-util-print!)
 

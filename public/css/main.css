@@ -377,3 +377,21 @@ body {
   flex: 1;
   text-align: right;
 }
+
+.container-0ff5b {
+  display: flex;
+  height: 800px;
+}
+
+.left-e447e {
+  border: 1px solid #ccc;
+  flex: 20;
+  height: 100%;
+  overflow-y: scroll;
+  padding: 15px;
+}
+
+.right-204a5 {
+  flex: 80;
+  height: 100%;
+}

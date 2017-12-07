@@ -1,20 +1,21 @@
-(ns snowflake-client.core
+(ns com.oakmac.snowflake.client.core
   (:require
     [cljs.reader :refer [read-string]]
-    [clojure.set :refer [union]]
-    [clojure.string :refer [blank? join lower-case split]]
+    [clojure.set :as set]
+    [clojure.string :as str]
+    [com.oakmac.snowflake.client.util :refer [by-id js-log log]]
     [goog.string :as gstring]
-    [rum.core :as rum]
-    [snowflake-client.util :refer [by-id js-log log]]))
+    [rum.core :as rum]))
+
 
 ;;------------------------------------------------------------------------------
 ;; Misc
 ;;------------------------------------------------------------------------------
 
 (defn- split-classname [c]
-  (let [v (split c "-")]
+  (let [v (str/split c "-")]
     {:full-classname c
-     :name (join "-" (pop v))
+     :name (str/join "-" (pop v))
      :hash (str "-" (peek v))}))
 
 ;;------------------------------------------------------------------------------
@@ -39,56 +40,56 @@
                   :lines []}]}
 
    "label-4a5cc"
-     {:flake "label-4a5cc"
-      :count 22
-      :definition {"color" "#aaa"
-                   "display" "block"
-                   "font-size" "11px"
-                   "font-weight" "600"
-                   "margin" "15px 0"
-                   "text-transform" "uppercase"}
-      :files
-        [{:filename "src-cljs/my_proj/bar.cljs", :count 5}
-         {:filename "src-cljs/my_proj/biz.cljs", :count 2}
-         {:filename "src-cljs/my_proj/foo.cljs", :count 3}
-         {:filename "templates/athens.mustache", :count 1}
-         {:filename "templates/chalcis.mustache", :count 1}
-         {:filename "templates/chania.mustache", :count 1}
-         {:filename "templates/heraklion.mustache", :count 1}
-         {:filename "templates/ioannina.mustache", :count 1}
-         {:filename "templates/larissa.mustache", :count 1}
-         {:filename "templates/patras.mustache", :count 1}
-         {:filename "templates/rhodes.mustache", :count 1}
-         {:filename "templates/thessaloniki.mustache", :count 1}
-         {:filename "templates/volos.mustache", :count 1}]}
+    {:flake "label-4a5cc"
+     :count 22
+     :definition {"color" "#aaa"
+                  "display" "block"
+                  "font-size" "11px"
+                  "font-weight" "600"
+                  "margin" "15px 0"
+                  "text-transform" "uppercase"}
+     :files
+       [{:filename "src-cljs/my_proj/bar.cljs", :count 5}
+        {:filename "src-cljs/my_proj/biz.cljs", :count 2}
+        {:filename "src-cljs/my_proj/foo.cljs", :count 3}
+        {:filename "templates/athens.mustache", :count 1}
+        {:filename "templates/chalcis.mustache", :count 1}
+        {:filename "templates/chania.mustache", :count 1}
+        {:filename "templates/heraklion.mustache", :count 1}
+        {:filename "templates/ioannina.mustache", :count 1}
+        {:filename "templates/larissa.mustache", :count 1}
+        {:filename "templates/patras.mustache", :count 1}
+        {:filename "templates/rhodes.mustache", :count 1}
+        {:filename "templates/thessaloniki.mustache", :count 1}
+        {:filename "templates/volos.mustache", :count 1}]}
 
    "header-label-f23ea"
-     {:flake "header-label-f23ea"
-      :count 6
-      :definition {"color" "#999"
-                   "font-size" "14px"
-                   "font-weight" "600"
-                   "text-transform" "uppercase"}
-      :files [{:filename "src-cljs/my_proj/bar.cljs", :count 2}
-              {:filename "src-cljs/my_proj/biz.cljs", :count 2}
-              {:filename "src-cljs/my_proj/foo.cljs", :count 2}]}
+    {:flake "header-label-f23ea"
+     :count 6
+     :definition {"color" "#999"
+                  "font-size" "14px"
+                  "font-weight" "600"
+                  "text-transform" "uppercase"}
+     :files [{:filename "src-cljs/my_proj/bar.cljs", :count 2}
+             {:filename "src-cljs/my_proj/biz.cljs", :count 2}
+             {:filename "src-cljs/my_proj/foo.cljs", :count 2}]}
 
    "list-label-27ddb"
-     {:flake "list-label-27ddb"
-      :count 8
-      :definition {"font-family" "\"Open Sans Light\""
-                   "font-weight" "300"
-                   "font-size" "34px"
-                   "border" "2px solid orange"
-                   "padding" "10px 20px"}
-      :files [{:filename "templates/larissa.mustache", :count 8}]}
+    {:flake "list-label-27ddb"
+     :count 8
+     :definition {"font-family" "\"Open Sans Light\""
+                  "font-weight" "300"
+                  "font-size" "34px"
+                  "border" "2px solid orange"
+                  "padding" "10px 20px"}
+     :files [{:filename "templates/larissa.mustache", :count 8}]}
 
    "clr-7f0e5"
-     {:flake "clr-7f0e5"
-      :count 41
-      :definition {"clear" "both"}
-      :files
-        [{:filename "src-cljs/my_proj/biz.cljs", :count 41}]}})
+    {:flake "clr-7f0e5"
+     :count 41
+     :definition {"clear" "both"}
+     :files
+       [{:filename "src-cljs/my_proj/biz.cljs", :count 41}]}})
 
 (def dummy-single-class (get dummy-class-data "clr-7f0e5"))
 
@@ -277,10 +278,10 @@
     [:div.text-container-sd0e9
       (map TextLine dummy-text)]])
 
-(rum/defc ClassDetailBody < rum/static
+(rum/defc RightBody < rum/static
   [c]
   (let [split-classname (split-classname (:flake c))]
-    [:div.right
+    [:div.right-204a5
       [:h2.class-name-sb0bc
         [:span (:name split-classname)]
         [:span.muted-sff17 (:hash split-classname)]
@@ -366,7 +367,7 @@
 
 ;; TODO: probably should memoize this
 (defn- filter-and-sort-flakes [flakes search-txt sort-method]
-  (let [lowercase-search-txt (lower-case search-txt)
+  (let [lowercase-search-txt (str/lower-case search-txt)
         filter-fn (partial match-text? lowercase-search-txt)
         sort-fn (get sort-fns sort-method)
         reverse? (contains? reverse-sort-methods sort-method)
@@ -380,7 +381,7 @@
 (rum/defc LeftPanel < rum/static
   [flakes search-txt sort-flakes-by]
   (let [flakes (filter-and-sort-flakes flakes search-txt sort-flakes-by)]
-    [:div.left
+    [:div.left-e447e
       [:input.search-input-s24fa
         {:on-change change-class-search
          :placeholder "Search Flakes"
@@ -402,13 +403,13 @@
 
 (rum/defc FlakesBody < rum/static
   [{:keys [flakes flakes-search-txt selected-flake sort-flakes-by]}]
-  [:div
+  [:div.container-0ff5b
     ;; [:button.primary-s04e4 {:on-click click-new-class-btn} "New Flake"]
-    [:div.flex-container-s6d73
-      (LeftPanel flakes flakes-search-txt sort-flakes-by)
-      (if selected-flake
-        (ClassDetailBody selected-flake)
-        [:div "TODO: no flake selected; prevent me from happening"])]])
+    ;; [:div.flex-container-s6d73 {:style {:height "800px"}}
+    (LeftPanel flakes flakes-search-txt sort-flakes-by)
+    (if selected-flake
+      (RightBody selected-flake)
+      [:div "TODO: no flake selected; prevent me from happening"])])
 
 (defn- click-tab [tab-id js-evt]
   (.preventDefault js-evt)
@@ -537,7 +538,7 @@
     (let [active-project (:active-project @app-state)
           css-flakes (get-in new-server-state [active-project :css-flakes])
           app-flakes (get-in new-server-state [active-project :app-flakes])
-          all-flakes (union css-flakes app-flakes)]
+          all-flakes (set/union css-flakes app-flakes)]
       (swap! app-state assoc :flakes all-flakes
                              :projects projects-for-ui))))
 

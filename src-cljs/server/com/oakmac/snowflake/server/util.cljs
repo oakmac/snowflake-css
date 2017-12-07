@@ -1,4 +1,4 @@
-(ns snowflake-server.util
+(ns com.oakmac.snowflake.server.util
   (:require
     [clojure.set :refer [union]]
     [clojure.string :refer [split split-lines]]))

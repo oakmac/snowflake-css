@@ -1,4 +1,4 @@
-(ns snowflake-server.config
+(ns com.oakmac.snowflake.server.config
   (:require
     [clojure.walk :refer [keywordize-keys]]))
 
