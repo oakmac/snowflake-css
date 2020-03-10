@@ -7,14 +7,14 @@
 (defn has-a-digit? [s]
   (not= (.search s #"\d") -1))
 
-(defn has-a-hex-char? [s]
-  (not= (.search s #"[abcdef]") -1))
-
 (assert (has-a-digit? "5"))
 (assert (has-a-digit? "a1"))
 (assert (has-a-digit? "19"))
 (assert (not (has-a-digit? "")))
 (assert (not (has-a-digit? "aaa")))
+
+(defn has-a-hex-char? [s]
+  (not= (.search s #"[abcdef]") -1))
 
 (assert (has-a-hex-char? "a"))
 (assert (has-a-hex-char? "az"))

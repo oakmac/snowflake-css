@@ -4,15 +4,11 @@
     ["glob" :as glob]
     ["postcss" :as postcss]
     ["yargs" :as yargs]
-    [clojure.string :as str]
     [clojure.set :as set]
+    [clojure.string :as str]
     [oops.core :refer [oget]]
     [snowflake-css.lib.predicates :refer [snowflake-class?]]
     [taoensso.timbre :as timbre]))
-
-
-
-
 
 (defn format-log-msg [{:keys [instant level msg_]}]
   (let [level-str (-> level name str/upper-case)
@@ -22,15 +18,9 @@
       (when (= level-str "WARN") "WARNING: ")
       msg)))
 
+(def possibles-regex #"([a-zA-Z0-9]+-){1,}([abcdef0-9]){5}")
 
-
-
-
-
-
-(def possibles-regex #"([a-z0-9]+-){1,}([abcdef0-9]){5}")
-
-(defn- get-hashes-from-file [file]
+(defn- get-snowflake-classes-from-file [file]
   ; (timbre/info "Reading" file "…")
   (let [file-contents (.readFileSync fs file "utf8")
         hashes (->> (re-seq possibles-regex file-contents)
@@ -40,19 +30,19 @@
     (timbre/info "Found" (count hashes) "snowflake classes in" file)
     hashes))
 
-
-
-
-(defn print-node [x]
-  (js/console.log (oget x "selector"))
-  (js/console.log "~~~~~~~~~~~~~~~~~~~~"))
-
-
+;; TODO: need to throw an error here if css-content cannot be parsed
+(defn- remove-classes-from-css [css-content classes-to-remove]
+  (let [root-node (.parse postcss css-content)]
+    (.walkRules root-node
+      (fn [node]
+        (let [selector (oget node "selector")]
+          (doseq [c classes-to-remove] ;; <-- FIXME: this is slow; O(n^2)
+            (when (str/starts-with? selector (str "." c))
+              (.remove node))))))
+    (oget (.toResult root-node) "css")))
 
 (defn glob-sync [pattern]
   (js->clj (.sync glob pattern)))
-
-
 
 ;; -----------------------------------------------------------------------------
 ;; Main Entry Point
@@ -66,6 +56,12 @@
         templates-path (:templates args)
         templates-path-is-file? (.isFileSync fs templates-path)
 
+        ;; TODO: add an "overwrite-css-file" option that only works if they provide
+        ;; a single CSS file as an option
+
+        ;; FIXME: if they pass in --output-css-file and it is the same thing as
+        ;; -css-input then throw a warning
+
         css-files (if css-is-file?
                     [css-search]
                     (glob-sync css-search))
@@ -76,57 +72,33 @@
         _ (timbre/info "Reading CSS and template files for snowflake classes …")
         css-classes (reduce
                       (fn [acc file]
-                        (assoc acc file (get-hashes-from-file file)))
+                        (assoc acc file (get-snowflake-classes-from-file file)))
                       {}
                       css-files)
         template-classes (reduce
                            (fn [acc file]
-                             (assoc acc file (get-hashes-from-file file)))
+                             (assoc acc file (get-snowflake-classes-from-file file)))
                            {}
                            templates-files)
 
         all-css-classes (apply set/union (vals css-classes))
         all-template-classes (apply set/union (vals template-classes))
-        orphan-template-classes (vec (set/difference all-template-classes all-css-classes))]
+        orphan-css-classes (set/difference all-css-classes all-template-classes)
+        orphan-template-classes (set/difference all-template-classes all-css-classes)
 
+        first-css-file-contents (.readFileSync fs (first css-files) "utf8")]
 
-    (timbre/info "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    (timbre/info "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     (timbre/info "Results:")
     (timbre/info "Found" (count all-css-classes) "snowflake classes in" (count css-classes) "CSS target files")
     (timbre/info "Found" (count all-template-classes) "snowflake classes in" (count template-classes) "template target files")
     (when-not (empty? orphan-template-classes)
-      (timbre/warn (count orphan-template-classes) "template classes not found in CSS:" orphan-template-classes))))
-
-    ; (timbre/info "zzzzzzzzzzzzzzzzzzzzzzzzzzzzz")))
-
-   ; (timbre/info css-classes)
-   ; (timbre/info "444444444444444444444444444444444444444444444444444")
-   ; (timbre/info template-classes)))
+      (timbre/warn (count orphan-template-classes) "template classes not found in CSS:" (vec orphan-template-classes)))
+    (when-not (empty? orphan-css-classes)
+      (timbre/warn (count orphan-css-classes) "classes not found in CSS:" (vec orphan-css-classes)))
 
 
-   ; (assert css-is-file? "FIXME: allow glob patterns for CSS files eventually")
-   ; (assert search-path-is-file? "FIXME: allow glob patterns for search path eventually")))
-
-   ; (let [css-hashes (get-hashes-from-file css-search)
-   ;       search-hashes (get-hashes-from-file search-path)
-   ;       in-css-not-in-search (set/difference css-hashes search-hashes)
-   ;       in-search-not-in-css (set/difference search-hashes css-hashes)]
-
-
-         ; file-contents (.readFileSync fs css-search "utf8")
-         ; js-root (.parse postcss file-contents)]
-
-     ; (timbre/info (count css-hashes))
-     ; (timbre/info (count search-hashes))
-     ; (timbre/info in-css-not-in-search)
-     ; (timbre/info "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-     ; (timbre/info in-search-not-in-css))))
-
-
-
-     ; (.walkRules js-root print-node))))
-
-   ; (timbre/info "I will search:" css-search)
-   ; (timbre/info "I will search:" search-path)
-   ; (timbre/info css-is-file?)
-   ; (timbre/info "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")))
+    ;; TODO: log file size before / after here and the number of rules removed
+    (when (:output-css-file args)
+      (let [new-css-file (remove-classes-from-css first-css-file-contents orphan-css-classes)]
+        (.writeFileSync fs (:output-css-file args) new-css-file "utf8")))))
