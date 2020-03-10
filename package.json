@@ -9,13 +9,10 @@
   "license": "ISC",
   "version": "0.0.1",
   "dependencies": {
-    "express": "4.13.4",
-    "fs-plus": "2.9.1",
-    "glob": "7.0.6",
-    "grunt": "0.4.5",
-    "grunt-contrib-less": "1.0.1",
-    "grunt-contrib-watch": "0.6.1",
-    "moment": "2.19.3",
-    "socket.io": "1.4.8"
+    "fs-plus": "3.1.1",
+    "glob": "7.1.6",
+    "postcss": "7.0.27",
+    "shadow-cljs": "2.8.91",
+    "yargs": "15.3.0"
   }
 }

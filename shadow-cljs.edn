@@ -1,0 +1,11 @@
+{:source-paths ["src-cljs"]
+
+ :dependencies
+ [[com.taoensso/timbre "4.10.0"]
+  [binaryage/oops "0.7.0"]]
+
+ :builds
+ {:snowflake-css
+  {:target :node-script
+   :main snowflake-css.cli.core/main
+   :output-to "bin/snowflake.js"}}}
