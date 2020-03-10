@@ -1,0 +1,5 @@
+{
+  "css-files": ["example/main.css"],
+  "output-css-file": "example/output.css",
+  "template-files": ["example/my-dir/*"],
+}

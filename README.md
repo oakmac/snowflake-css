@@ -1,9 +1,4 @@
-# Snowflake CSS **[WORK IN PROGRESS]**
-
-## Project Status
-
-As of September 2016, this project is in a very early stage of development and
-should not be considered usable.
+# Snowflake CSS
 
 ## Summary
 
@@ -15,6 +10,8 @@ By using a flat structure of globally unique single-class selectors (flakes),
 Snowflake CSS avoids a host of problems caused by existing CSS techniques and
 enables maintenance and optimization tasks to be done with tools instead of
 developer brainpower.
+
+##
 
 ## Development
 

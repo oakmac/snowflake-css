@@ -47,13 +47,31 @@
 ;; -----------------------------------------------------------------------------
 ;; Main Entry Point
 
+(def default-config-file "./snowflake-css.json")
+
+;; TODO: command line options
+;; --config-file
+;; --eject
+;; --scramble
+;; --show-orphans
+;; --output-file
 (defn- main [& js-args]
   (timbre/merge-config! {:output-fn format-log-msg})
   (let [args (js->clj (oget yargs "argv") :keywordize-keys true)
+        config-file (get args :config-file default-config-file)
+        config-file-options (try
+                              (-> (.readFileSync fs config-file)
+                                  js/JSON.parse
+                                  (js->clj :keywordize-keys true))
+                              (catch js/Object e nil))
+        options (if config-file-options
+                  config-file-options
+                  args)
 
-        css-search (:css args)
-        css-is-file? (.isFileSync fs css-search)
-        templates-path (:templates args)
+
+        css-files-glob (:css-files options)
+        css-is-file? (.isFileSync fs css-files-glob)
+        templates-path (:template-files options)
         templates-path-is-file? (.isFileSync fs templates-path)
 
         ;; TODO: add an "overwrite-css-file" option that only works if they provide
