@@ -8,4 +8,9 @@
  {:snowflake
   {:target :node-script
    :main snowflake-css.cli.core/main
-   :output-to "bin/snowflake.js"}}}
+   :output-to "bin/snowflake.js"}}
+
+ ;; I need this flag in order to compile on my desktop.
+ ;; Ubuntu OpenJDK bug - https://github.com/AdoptOpenJDK/openjdk-build/issues/893
+ ;; -- C. Oakman, 11 Apr 2020
+ :jvm-opts ["-XX:UseAVX=0"]}
