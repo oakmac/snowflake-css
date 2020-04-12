@@ -7,8 +7,14 @@
   "name": "snowflake-css",
   "description": "Snowflake CSS tooling",
   "license": "ISC",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "bin": "./bin/snowflake-css.js",
+  "files": [
+    "/bin/snowflake-css.js",
+    "LICENSE.md",
+    "README.md",
+    "yarn.lock"
+  ],
   "dependencies": {
     "fs-plus": "3.1.1",
     "glob": "7.1.6",
