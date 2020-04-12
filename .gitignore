@@ -1,18 +1,5 @@
-# npm packages
-node_modules
+node_modules/
+.shadow-cljs/
 
-# CLJS compiler folder
-target
-
-# CLJS compiled files
-public/js/app-dev.js
-public/js/app-prod.js
-app.js
-
-# ignore diffs
+# ignore diff files
 *.diff
-
-# protect our config file
-config.json
-
-.shadow-cljs
