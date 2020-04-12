@@ -82,17 +82,24 @@
 (defn get-snowflake-classes-from-str
   "returns a set of snowflake classes from a string"
   [a-string]
-  (->> (re-seq possibles-regex a-string)
+  (->> (str " " a-string " ")
+       (re-seq possibles-regex)
        (map first)
        (map remove-last-char)
        (filter snowflake-class?)
        set))
 
+(assert (get-snowflake-classes-from-str "fizzle-44ebc") #{"fizzle-44ebc"})
+(assert (get-snowflake-classes-from-str "fizzle-44ebc{") #{"fizzle-44ebc"})
 (assert (get-snowflake-classes-from-str "fizzle-44ebc.") #{"fizzle-44ebc"})
 (assert (get-snowflake-classes-from-str ".fizzle-44ebc a") #{"fizzle-44ebc"})
 (assert (get-snowflake-classes-from-str ".fizzle-44ebc a, .foo-56bec") #{"fizzle-44ebc" "foo-56bec"})
+(assert (get-snowflake-classes-from-str "fizzle-44ebc foo-56bec") #{"fizzle-44ebc" "foo-56bec"})
 (assert (get-snowflake-classes-from-str "<div class=\"fizzle-44ebc\">") #{"fizzle-44ebc"})
-(assert (get-snowflake-classes-from-str " e4d2ad4f-f4f3-420b-ba95-d2b869fc9a6d ") #{})
+(assert (get-snowflake-classes-from-str "<div class=\"fizzle-44ebc\">") #{"fizzle-44ebc"})
+(assert (get-snowflake-classes-from-str "<div class=\"fizzle-44ebc foo-56bec\">") #{"fizzle-44ebc" "foo-56bec"})
+(assert (get-snowflake-classes-from-str "e4d2ad4f-f4f3-420b-ba95-d2b869fc9a6d") #{})
+(assert (get-snowflake-classes-from-str "      'e4d2ad4f-f4f3-420b-ba95-d2b869fc9a6d'") #{})
 
 ;; -----------------------------------------------------------------------------
 ;; Process CSS File

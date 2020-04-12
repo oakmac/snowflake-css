@@ -1,5 +1,5 @@
 {
   "inputCSSFile": "example/everything.css",
   "outputCSSFile": "example/main.css",
-  "templateFiles": ["example/my-dir/*", "example/my-dir/index.html"]
+  "templateFiles": ["example/templates/**/*.html"]
 }
