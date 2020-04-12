@@ -53,3 +53,14 @@
 (assert (not (snowflake-class? "fizzle-44y73")))
 (assert (not (snowflake-class? "fizzle-aaabb")))
 (assert (not (snowflake-class? "abc fizzle-44ebc")))
+
+(defn valid-cli-arg?
+  "Is x a possible CLI argument?"
+  [x]
+  (and (string? x)
+       (not (str/blank? x))))
+
+(assert (valid-cli-arg? "foo"))
+(assert (valid-cli-arg? "foo/bar"))
+(assert (not (valid-cli-arg? "")))
+(assert (not (valid-cli-arg? nil)))

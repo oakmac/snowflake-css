@@ -5,7 +5,7 @@
   [binaryage/oops "0.7.0"]]
 
  :builds
- {:snowflake
+ {:snowflake-css
   {:target :node-script
    :main snowflake-css.cli.core/main
    :output-to "bin/snowflake-css.js"}}

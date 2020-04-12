@@ -1,6 +1,6 @@
 # Snowflake CSS
 
-**tldr:** Simplify CSS with a globally unique hash-map for selectors.
+**tldr:** Simplify CSS with globally unique selectors.
 
 ## What is all this about?
 
@@ -77,8 +77,8 @@ Snowflake CSS is written in [ClojureScript] using [shadow-cljs].
 # install node_modules
 yarn install
 
-# compile bin/snowflake.js
-npx shadow-cljs release snowflake
+# compile bin/snowflake-css.js
+npx shadow-cljs release snowflake-css
 ```
 
 [ClojureScript]:https://clojurescript.org/
