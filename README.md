@@ -1,6 +1,6 @@
 # Snowflake CSS
 
-**tldr:** Use a globally unique hash-map for CSS selectors. Simple.
+**tldr:** Simplify CSS with a globally unique hash-map for selectors.
 
 ## What is all this about?
 

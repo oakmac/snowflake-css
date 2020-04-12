@@ -71,20 +71,28 @@
 ;; -----------------------------------------------------------------------------
 ;; Flake Parsing
 
-(def possibles-regex #"([a-zA-Z0-9]+-){1,}([abcdef0-9]){5}")
+(def possibles-regex #"([a-z0-9]+-){1,}([abcdef0-9]){5}[^abcdef0-9]")
+
+(defn- remove-last-char [s]
+  (subs s 0 (dec (count s))))
+
+(assert (= (remove-last-char "aaa") "aa"))
+(assert (= (remove-last-char "") ""))
 
 (defn get-snowflake-classes-from-str
   "returns a set of snowflake classes from a string"
   [a-string]
   (->> (re-seq possibles-regex a-string)
        (map first)
+       (map remove-last-char)
        (filter snowflake-class?)
        set))
 
-(assert (get-snowflake-classes-from-str "fizzle-44ebc") #{"fizzle-44ebc"})
+(assert (get-snowflake-classes-from-str "fizzle-44ebc.") #{"fizzle-44ebc"})
 (assert (get-snowflake-classes-from-str ".fizzle-44ebc a") #{"fizzle-44ebc"})
 (assert (get-snowflake-classes-from-str ".fizzle-44ebc a, .foo-56bec") #{"fizzle-44ebc" "foo-56bec"})
 (assert (get-snowflake-classes-from-str "<div class=\"fizzle-44ebc\">") #{"fizzle-44ebc"})
+(assert (get-snowflake-classes-from-str " e4d2ad4f-f4f3-420b-ba95-d2b869fc9a6d ") #{})
 
 ;; -----------------------------------------------------------------------------
 ;; Process CSS File
@@ -116,10 +124,7 @@
        (timbre/warn "Cannot read file:" file)
        #{})
      (let [file-contents (read-file-sync! file)
-           flakes (->> (re-seq possibles-regex file-contents)
-                       (map first)
-                       (filter snowflake-class?)
-                       set)]
+           flakes (get-snowflake-classes-from-str file-contents)]
        (when log?
          (timbre/info "Found" (count flakes) "flakes in" file))
        flakes))))
@@ -164,7 +169,7 @@
       (timbre/fatal "prune command input error: " inputCSSFile "is not a valid file")
       (timbre/fatal "Goodbye!")
       (process-exit! 1))
-    ;; TODO: we could do validation of templateFiles config value here
+    ;; FIXME: we could do validation of templateFiles config value here
     (let [write-output-to-file? (string? outputCSSFile)
           log-stuff? write-output-to-file?
           input-css-contents (read-file-sync! inputCSSFile)
@@ -183,8 +188,11 @@
           (timbre/info "Total output flakes:" (count template-flakes))
           (write-file-sync! outputCSSFile output-css)
           (timbre/info "Wrote" outputCSSFile "with" output-flake-count "flakes")
-          (when-not (= (count input-css-flakes) (count template-flakes) output-flake-count)
-            (timbre/info "Run \"npx snowflake-css report\" to see a report of flake counts")))
+          (when-not (= (count input-css-flakes) (count output-css-flakes))
+            (timbre/info "Input flakes not found in" outputCSSFile ":" (set/difference input-css-flakes output-css-flakes)))
+          (when-not (= (count template-flakes) (count output-css-flakes))
+            (timbre/info "Template flakes not found in" outputCSSFile ":" (set/difference template-flakes output-css-flakes))))
+          ; (timbre/info "Run \"npx snowflake-css report\" to see a report of flake counts"))
         (print-to-console! output-css))
       (process-exit!))))
 
