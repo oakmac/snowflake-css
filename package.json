@@ -7,7 +7,7 @@
   "name": "snowflake-css",
   "description": "Snowflake CSS tooling",
   "license": "ISC",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "bin": "./bin/snowflake-css.js",
   "files": [
     "/bin/snowflake-css.js",
