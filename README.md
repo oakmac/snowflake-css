@@ -84,6 +84,6 @@ npx shadow-cljs release snowflake
 [ClojureScript]:https://clojurescript.org/
 [shadow-cljs]:https://shadow-cljs.org/
 
-## License ![ISC License Badge](https://img.shields.io/badge/license-ISC-green)
+## License
 
 [ISC License](LICENSE.md)
