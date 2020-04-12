@@ -2,52 +2,34 @@
   (:require
     ["postcss" :as postcss]
     [clojure.set :as set]
+    [clojure.string :as str]
     [oops.core :refer [oget]]
     [snowflake-css.lib.filesystem-helpers :refer [file-exists? read-file-sync!]]
     [snowflake-css.lib.predicates :refer [snowflake-class?]]
     [taoensso.timbre :as timbre]))
 
-(def possibles-regex #"([^abcdef0-9])([a-z0-9]+-){1,}([abcdef0-9]){5}([^abcdef0-9])")
-;; Guide:              A             B               C               D
-;; A: any non-valid snowflake class character
-;; B: the name part of a snowflake class
-;; C: the hash part of a snowflake class
-;; D: any non-valid snowflake class character
-
-(defn- remove-first-and-last-chars [a-string]
-  (case (count a-string)
-    (0 1 2) ""
-    (subs a-string 1 (dec (count a-string)))))
-
-(assert (= (remove-first-and-last-chars "abc") "b"))
-(assert (= (remove-first-and-last-chars " abc ") "abc"))
-(assert (= (remove-first-and-last-chars "abbbc") "bbb"))
-(assert (= (remove-first-and-last-chars "") ""))
-(assert (= (remove-first-and-last-chars "a") ""))
-(assert (= (remove-first-and-last-chars "aa") ""))
+(def non-flake-char-regex #"[^a-z0-9-]")
 
 (defn string->flakes
   "returns a set of snowflake classes from a string"
   [a-string]
-  (->> (str " " a-string " ")
-       (re-seq possibles-regex)
-       (map first)
-       (map remove-first-and-last-chars)
-       (filter snowflake-class?)
-       set))
+  (as-> a-string $
+    (str/split $ non-flake-char-regex)
+    (filter snowflake-class? $)
+    (set $)))
 
-(assert (string->flakes "fizzle-44ebc") #{"fizzle-44ebc"})
-(assert (string->flakes "fizzle-44ebc{") #{"fizzle-44ebc"})
-(assert (string->flakes "fizzle-44ebc.") #{"fizzle-44ebc"})
-(assert (string->flakes "}fizzle-44ebc") #{"fizzle-44ebc"})
-(assert (string->flakes ".fizzle-44ebc a") #{"fizzle-44ebc"})
-(assert (string->flakes ".fizzle-44ebc a, .foo-56bec") #{"fizzle-44ebc" "foo-56bec"})
-(assert (string->flakes "fizzle-44ebc foo-56bec") #{"fizzle-44ebc" "foo-56bec"})
-(assert (string->flakes "<div class=\"fizzle-44ebc\">") #{"fizzle-44ebc"})
-(assert (string->flakes "<div class=fizzle-44ebc>") #{"fizzle-44ebc"})
-(assert (string->flakes "<div class=\"fizzle-44ebc foo-56bec\">") #{"fizzle-44ebc" "foo-56bec"})
-(assert (string->flakes "e4d2ad4f-f4f3-420b-ba95-d2b869fc9a6d") #{})
-(assert (string->flakes "      'e4d2ad4f-f4f3-420b-ba95-d2b869fc9a6d'") #{})
+(assert (= (string->flakes "fizzle-44ebc") #{"fizzle-44ebc"}))
+(assert (= (string->flakes "fizzle-44ebc{") #{"fizzle-44ebc"}))
+(assert (= (string->flakes "fizzle-44ebc.") #{"fizzle-44ebc"}))
+(assert (= (string->flakes "}fizzle-44ebc") #{"fizzle-44ebc"}))
+(assert (= (string->flakes ".fizzle-44ebc a") #{"fizzle-44ebc"}))
+(assert (= (string->flakes ".fizzle-44ebc a, .foo-56bec") #{"fizzle-44ebc" "foo-56bec"}))
+(assert (= (string->flakes "fizzle-44ebc foo-56bec") #{"fizzle-44ebc" "foo-56bec"}))
+(assert (= (string->flakes "<div class=\"fizzle-44ebc\">") #{"fizzle-44ebc"}))
+(assert (= (string->flakes "<div class=fizzle-44ebc>") #{"fizzle-44ebc"}))
+(assert (= (string->flakes "<div class=\"fizzle-44ebc foo-56bec\">") #{"fizzle-44ebc" "foo-56bec"}))
+(assert (= (string->flakes "e4d2ad4f-f4f3-420b-ba95-d2b869fc9a6d") #{}))
+(assert (= (string->flakes "      'e4d2ad4f-f4f3-420b-ba95-d2b869fc9a6d'") #{}))
 
 (defn file->flakes
   "Reads a file and returns a set of the snowflake classes found in it"

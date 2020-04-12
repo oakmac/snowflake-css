@@ -39,15 +39,20 @@
 (defn- valid-snowflake-chars? [snowflake-class]
   (= (.search snowflake-class #"[^a-zA-Z0-9-]") -1))
 
-(defn snowflake-class? [snowflake-class]
-  (let [parts (str/split snowflake-class "-")
+(defn snowflake-class? [possible-snowflake-class]
+  (let [parts (str/split possible-snowflake-class "-")
         hash-part (last parts)]
     (and
-      (valid-snowflake-chars? snowflake-class)
-      (valid-hash-part? hash-part))))
+      (>= (count parts) 2)
+      (valid-hash-part? hash-part)
+      (valid-snowflake-chars? possible-snowflake-class))))
 
 (assert (snowflake-class? "fizzle-44ebc"))
 (assert (snowflake-class? "fizzle-wizzle-ae98f"))
+(assert (not (snowflake-class? " fizzle-44ebc")))
+(assert (not (snowflake-class? "fizzle-44ebc ")))
+(assert (not (snowflake-class? "fizzle-44ebc{")))
+(assert (not (snowflake-class? ".fizzle-44ebc")))
 (assert (not (snowflake-class? "fizzle-44ebca")))
 (assert (not (snowflake-class? "fizzle-44373")))
 (assert (not (snowflake-class? "fizzle-44y73")))
