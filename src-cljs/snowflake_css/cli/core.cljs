@@ -19,6 +19,8 @@
     (str
       "[snowflake-css] "
       (when (= level-str "WARN") "WARNING: ")
+      (when (= level-str "FATAL") "ERROR: ")
+      (when (= level-str "ERROR") "ERROR: ")
       msg)))
 
 ;; -----------------------------------------------------------------------------
@@ -109,26 +111,82 @@
   ([file]
    (file->flakes file false))
   ([file log?]
-   (let [file-contents (read-file-sync! file)
-         flakes (->> (re-seq possibles-regex file-contents)
-                     (map first)
-                     (filter snowflake-class?)
-                     set)]
-     (when log?
-       (timbre/info "Found" (count flakes) "flakes in" file))
-     flakes)))
+   (if-not (file-exists? file)
+     (do
+       (timbre/warn "Cannot read file:" file)
+       #{})
+     (let [file-contents (read-file-sync! file)
+           flakes (->> (re-seq possibles-regex file-contents)
+                       (map first)
+                       (filter snowflake-class?)
+                       set)]
+       (when log?
+         (timbre/info "Found" (count flakes) "flakes in" file))
+       flakes))))
 
 (defn- files->flakes-map
   "returns a map of filename --> snowflake classes"
-  [files]
-  (reduce
-    (fn [acc file]
-      (assoc acc file (file->flakes file)))
-    {}
-    files))
+  ([files]
+   (files->flakes-map files false))
+  ([files log?]
+   (reduce
+     (fn [acc file]
+       (assoc acc file (file->flakes file log?)))
+     {}
+     files)))
 
 ;; -----------------------------------------------------------------------------
 ;; Command defmethods
+
+(defn- valid-arg?
+  "Is x a possible CLI argument?"
+  [x]
+  (and (string? x)
+       (not (str/blank? x))))
+
+(assert (valid-arg? "foo"))
+(assert (valid-arg? "foo/bar"))
+(assert (not (valid-arg? "")))
+(assert (not (valid-arg? nil)))
+
+(defn prune!
+  [js-args]
+  (let [args (js->clj js-args :keywordize-keys true)
+        {:keys [inputCSSFile outputCSSFile templateFiles]} args]
+    ;; config validation
+    (when (or (not inputCSSFile) (not templateFiles))
+      (timbre/fatal "prune command needs both \"inputCSSFile\" and \"templateFiles\" config options")
+      (timbre/fatal "Please run \"npx snowflake init\" to assist in creating a snowflake-css.json config file")
+      (timbre/fatal "Goodbye!")
+      (process-exit! 1))
+    ;; inputCSSFile should exist
+    (when-not (file-exists? inputCSSFile)
+      (timbre/fatal "prune command input error: " inputCSSFile "is not a valid file")
+      (timbre/fatal "Goodbye!")
+      (process-exit! 1))
+    ;; TODO: we could do validation of templateFiles config value here
+    (let [write-output-to-file? (string? outputCSSFile)
+          log-stuff? write-output-to-file?
+          input-css-contents (read-file-sync! inputCSSFile)
+          input-css-flakes (get-snowflake-classes-from-str input-css-contents)
+          _ (when log-stuff?
+              (timbre/info "Found" (count input-css-flakes) "flakes in" inputCSSFile))
+          template-files (get-files-from-pattern-arg templateFiles)
+          template-files->flakes (files->flakes-map template-files log-stuff?)
+          template-flakes (apply set/union (vals template-files->flakes))
+          output-css (remove-flakes-from-css input-css-contents template-flakes)
+          output-css-flakes (get-snowflake-classes-from-str output-css)
+          output-flake-count (count output-css-flakes)]
+      (if write-output-to-file?
+        (do
+          (timbre/info "Total input flakes:" (count input-css-flakes))
+          (timbre/info "Total output flakes:" (count template-flakes))
+          (write-file-sync! outputCSSFile output-css)
+          (timbre/info "Wrote" outputCSSFile "with" output-flake-count "flakes")
+          (when-not (= (count input-css-flakes) (count template-flakes) output-flake-count)
+            (timbre/info "Run \"npx snowflake-css report\" to see a report of flake counts")))
+        (print-to-console! output-css))
+      (process-exit!))))
 
 (defmulti run-command!
   (fn [command-type _opts _args] command-type))
@@ -155,14 +213,14 @@
   [_command-type {:keys [css-snowflake-classes
                          template-snowflake-classes
                          all-template-snowflake-classes]}]
-  (timbre/info "LIST COMMAND go go!!")
+  (timbre/info "FIXME: write the list command")
   (process-exit!))
 
 (defmethod run-command! :rename
   [_command-type {:keys [css-snowflake-classes
                          template-snowflake-classes
                          all-template-snowflake-classes]}]
-  (timbre/info "RENAME COMMAND go go!!")
+  (timbre/info "FIXME: write the rename command")
   (process-exit!))
 
 (defmethod run-command! :default
@@ -210,7 +268,7 @@
     "command" "prune"
     "describe" (str "Takes a CSS file as input and removes any ruleset that references "
                     "a snowflake class selector not found in template files")
-    "handler" (partial command-handler :prune)))
+    "handler" prune!))
 
 (def js-rename-command
   (js-obj
@@ -236,8 +294,8 @@
     (.config)
     (.default "config" default-config-file)
     (.command js-prune-command)
-    (.command js-rename-command)
-    (.command js-list-command)
+    ; (.command js-rename-command)
+    ; (.command js-list-command)
     (.demandCommand) ;; show them --help if they do not pass in a command
     (.help)
     (.-argv)))
