@@ -42,7 +42,8 @@
        #{})
      (let [file-contents (read-file-sync! file)
            flakes (string->flakes file-contents)]
-       (when log?
+       (when (and log?
+                  (not (zero? (count flakes))))
          (timbre/info "Found" (count flakes) "flakes in" file))
        flakes))))
 

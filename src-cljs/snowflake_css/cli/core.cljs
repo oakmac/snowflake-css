@@ -44,10 +44,10 @@
           output-flake-count (count output-css-flakes)]
       (if write-output-to-file?
         (do
-          (timbre/info "Total input flakes:" (count input-css-flakes))
-          (timbre/info "Total output flakes:" (count template-flakes))
+          (timbre/info "CSS input flake count:" (count input-css-flakes))
+          (timbre/info "Template flake count:" (count template-flakes))
           (fs/write-file-sync! outputCSSFile output-css)
-          (timbre/info "Wrote" outputCSSFile "with" output-flake-count "flakes")
+          (timbre/info "Wrote output file" outputCSSFile "with" output-flake-count "flakes")
           (when-not (= (count input-css-flakes) (count output-css-flakes))
             (timbre/info "Input flakes not found in" outputCSSFile ":" (set/difference input-css-flakes output-css-flakes)))
           (when-not (= (count template-flakes) (count output-css-flakes))
