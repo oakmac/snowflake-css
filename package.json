@@ -1,13 +1,14 @@
 {
-  "author": "Chris Oakman <chris@oakmac.com> (http://chrisoakman.com/)",
+  "name": "snowflake-css",
+  "description": "Snowflake CSS tooling",
+  "version": "0.0.7",
+  "author": "Chris Oakman <chris@oakmac.com> (https://chrisoakman.com/)",
   "repository": {
     "type": "git",
     "url": "git://github.com/oakmac/snowflake-css.git"
   },
-  "name": "snowflake-css",
-  "description": "Snowflake CSS tooling",
+  "bugs": "https://github.com/oakmac/snowflake-css/issues",
   "license": "ISC",
-  "version": "0.0.7",
   "bin": "./bin/snowflake-css.js",
   "files": [
     "/bin/snowflake-css.js",
@@ -15,6 +16,9 @@
     "README.md",
     "yarn.lock"
   ],
+  "scripts": {
+    "prepack": "rm --force *.diff && rm --force *.tgz"
+  },
   "dependencies": {
     "fs-plus": "3.1.1",
     "glob": "7.1.6",
