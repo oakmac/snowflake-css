@@ -2,6 +2,9 @@
   (:require
     [clojure.string :as str]))
 
+;; TODO: use chalk library here for some coloring?
+;; https://github.com/chalk/chalk
+
 (defn format-log-msg [{:keys [instant level msg_]}]
   (let [level-str (-> level name str/upper-case)
         msg (str (force msg_))]

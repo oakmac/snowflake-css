@@ -36,6 +36,13 @@ Examples:
 - `.header-411db`
 - `.login-btn-9c2da`
 - `.cancel-6b36a`
+- `.jumbo-image-4b455`
+
+Anti-examples:
+- `.LoginBtn-783af` --> only lower-case letters in the class name
+- `.logo-22536` --> hash must contain at least one alpha character
+- `.cancel-button-bceff` --> hash must contain at least one number
+- `.nav-link-e72c` --> hash must be 5 characters
 
 ## What is the deal with those hashes?
 
@@ -43,14 +50,14 @@ The hashes are random and only serve the purpose of creating a project-wide
 unique symbol that can be found via tooling.
 
 Using 5 hexademical characters creates an address space of around 1 million
-options (16^5). Combined with the rest of the words in the class name should be
+options (~16^5). Combined with the rest of the words in the class name should be
 plenty enough randomness for even the largest of web projects.
 
 The requirement of "at least one number and one letter" came from testing in
 practical application. This helps to reduce false positive matches against
 UUIDs, long numbers, and other symbols often found in codebases.
 
-A list of 2000 valid hashes can be found [here](https://oakmac.com/hashes.php).
+A random list of 2000 valid hashes can be found [here](https://oakmac.com/hashes.php).
 I keep a file on my desktop called `hashes.txt` and simply cut/paste one at a
 time whenever I need to create a new class. I hope to create some
 editor-integrated tooling to assist with creating, writing, copying class names
