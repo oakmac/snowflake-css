@@ -1,7 +1,7 @@
 {
   "name": "snowflake-css",
   "description": "Snowflake CSS tooling",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "author": "Chris Oakman <chris@oakmac.com> (https://chrisoakman.com/)",
   "repository": {
     "type": "git",
