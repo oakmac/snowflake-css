@@ -27,9 +27,9 @@ Snowflake CSS uses the following convention for class names:
 
 1. only lower-case letters with hyphens (ie: `snake-case`)
 1. append a 5-digit hash to the end of the class name:
-  - the hash must be hexadecimal characters (ie: `[a-f0-9]`)
-  - the hash must have at least **one number character**
+  - the hash must be only hexadecimal characters (ie: `[a-f0-9]`)
   - the hash must have at least **one alpha character**
+  - the hash must have at least **one number character**
 
 Examples:
 - `.primary-btn-d4b50`

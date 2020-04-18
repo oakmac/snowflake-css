@@ -31,6 +31,7 @@
 (assert (= (string->flakes "e4d2ad4f-f4f3-420b-ba95-d2b869fc9a6d") #{}))
 (assert (= (string->flakes "      'e4d2ad4f-f4f3-420b-ba95-d2b869fc9a6d'") #{}))
 
+
 (defn file->flakes
   "Reads a file and returns a set of the snowflake classes found in it"
   ([file]
@@ -47,6 +48,7 @@
          (timbre/info "Found" (count flakes) "flakes in" file))
        flakes))))
 
+
 (defn files->flakes-map
   "returns a map of filename --> snowflake classes"
   ([files]
@@ -57,6 +59,7 @@
        (assoc acc file (file->flakes file log?)))
      {}
      files)))
+
 
 ;; TODO: need to throw an error here if css-content cannot be parsed
 (defn remove-flakes-from-css-string
