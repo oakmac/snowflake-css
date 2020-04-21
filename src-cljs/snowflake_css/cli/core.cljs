@@ -54,20 +54,27 @@
   true)
 
 
+(defn- set->sorted-js-array [a-set]
+  (->> a-set
+       (into [])
+       sort
+       clj->js))
+
+
 (defn- flake-map->report-js-obj
   "Convert flake info map to a JavaScript Object"
   [{:keys [input-flakes lonely-input-flakes output-flakes lonely-output-flakes
            template-flakes lonely-template-flakes]}]
   (js-obj
-    "inputFlakes" (clj->js input-flakes)
+    "inputFlakes" (set->sorted-js-array input-flakes)
     "inputFlakesCount" (count input-flakes)
-    "lonelyInputFlakes" (clj->js lonely-input-flakes)
+    "lonelyInputFlakes" (set->sorted-js-array lonely-input-flakes)
     "lonelyInputFlakesCount" (count lonely-input-flakes)
-    "lonelyTemplateFlakes" (clj->js lonely-template-flakes)
+    "lonelyTemplateFlakes" (set->sorted-js-array lonely-template-flakes)
     "lonelyTemplateFlakesCount" (count lonely-template-flakes)
-    "outputFlakes" (clj->js output-flakes)
+    "outputFlakes" (set->sorted-js-array output-flakes)
     "outputFlakesCount" (count output-flakes)
-    "templateFlakes" (clj->js template-flakes)
+    "templateFlakes" (set->sorted-js-array template-flakes)
     "templateFlakesCount" (count template-flakes)))
 
 
