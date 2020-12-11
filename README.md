@@ -57,11 +57,9 @@ The requirement of "at least one number and one letter" came from testing in
 practical application. This helps to reduce false positive matches against
 UUIDs, long numbers, and other symbols often found in codebases.
 
-A random list of 2000 valid hashes can be found [here](https://oakmac.com/hashes.php).
-I keep a file on my desktop called `hashes.txt` and simply cut/paste one at a
-time whenever I need to create a new class. I hope to create some
-editor-integrated tooling to assist with creating, writing, copying class names
-in the future. Any help here would be appreciated :)
+## Editor Plugins and Tooling
+
+- [snowflake-buddy for Atom](https://atom.io/packages/snowflake-buddy)
 
 ## Getting Started
 
