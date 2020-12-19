@@ -7,7 +7,6 @@
     [snowflake-css.lib.flake-parsing :refer [files->flakes-map string->flakes remove-flakes-from-css-string]]
     [snowflake-css.lib.logging :as logging]
     [snowflake-css.lib.node-helpers :refer [print-to-console! process-exit!]]
-    [snowflake-css.lib.predicates :refer [snowflake-class?]]
     [taoensso.timbre :as timbre]))
 
 
