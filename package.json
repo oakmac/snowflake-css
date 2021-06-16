@@ -22,7 +22,7 @@
   "dependencies": {
     "fs-plus": "3.1.1",
     "glob": "7.1.6",
-    "postcss": "7.0.27",
+    "postcss": "7.0.36",
     "yargs": "15.3.0"
   },
   "devDependencies": {
